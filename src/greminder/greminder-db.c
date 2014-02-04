@@ -95,8 +95,9 @@ g_reminder_db_private_find (GReminderDbPrivate *priv,
     leveldb_iter_seek (it, keyword, strlen (keyword));
     while (leveldb_iter_valid (it))
     {
-        /* FIXME: foo must not match foobar */
         const gchar *key = leveldb_iter_key (it, &len);
+        if (klen != len && key[klen])
+            break;
         if (memcmp (keyword, key, klen))
             break;
         items = g_slist_prepend (items, sdup (leveldb_iter_value (it, &len), &len));
@@ -124,9 +125,8 @@ g_reminder_db_private_get_item (GReminderDbPrivate *priv,
     leveldb_iter_seek (it, hash, strlen (hash));
     while (leveldb_iter_valid (it))
     {
-        /* FIXME: foo must not match foobar */
         const gchar *key = leveldb_iter_key (it, &len);
-        if (len != hlen)
+        if (len != hlen && !key[hlen])
         {
             if (memcmp (hash, key, hlen))
                 break;
