@@ -19,9 +19,26 @@
 
 #include "greminder-db-private.h"
 
+#include <leveldb/c.h>
+
 #include <string.h>
 
-#include <leveldb/c.h>
+#define G_REMINDER_CLEANUP_SLIST_FREE G_REMINDER_CLEANUP (g_reminder_slist_free_ptr)
+
+#define G_REMINDER_CLEANUP_DB_ITER_DESTROY G_REMINDER_CLEANUP (g_reminder_db_iter_destroy)
+
+static void
+g_reminder_slist_free_ptr (GSList **l)
+{
+    g_slist_free_full (*l, g_free);
+    *l = NULL;
+}
+
+static void
+g_reminder_db_iter_destroy (leveldb_iterator_t **it)
+{
+    leveldb_iter_destroy (*it);
+}
 
 struct _GReminderDbPrivate
 {
@@ -87,8 +104,8 @@ static GSList *
 g_reminder_db_private_find (GReminderDbPrivate *priv,
                             const gchar        *keyword)
 {
+    G_REMINDER_CLEANUP_DB_ITER_DESTROY leveldb_iterator_t *it = leveldb_create_iterator (priv->db, priv->roptions);
     GSList *items = NULL;
-    leveldb_iterator_t *it = leveldb_create_iterator (priv->db, priv->roptions);
     size_t len;
     size_t klen = strlen (keyword); 
 
@@ -104,7 +121,6 @@ g_reminder_db_private_find (GReminderDbPrivate *priv,
         leveldb_iter_next (it);
     }
 
-    leveldb_iter_destroy (it); /* TODO: cleanup */
     return items;
 }
 
@@ -112,15 +128,16 @@ static GReminderItem *
 g_reminder_db_private_get_item (GReminderDbPrivate *priv,
                                 const gchar        *hash)
 {
-    size_t len;
-    size_t hlen = strlen (hash);
+    G_REMINDER_CLEANUP_SLIST_FREE GSList *keywords = NULL;
+    G_REMINDER_CLEANUP_DB_ITER_DESTROY leveldb_iterator_t *it = NULL;
     G_REMINDER_CLEANUP_FREE gchar *err = NULL;
-    G_REMINDER_CLEANUP_FREE gchar *contents = sdup (leveldb_get (priv->db, priv->roptions, hash, strlen (hash), &len, &err), &len);
+    size_t hlen = strlen (hash);
+    size_t len;
+    G_REMINDER_CLEANUP_FREE gchar *contents = sdup (leveldb_get (priv->db, priv->roptions, hash, hlen, &len, &err), &len);
     if (err) /* TODO: handle */
         return NULL;
 
-    GSList *keywords = NULL;
-    leveldb_iterator_t *it = leveldb_create_iterator (priv->db, priv->roptions);
+    it = leveldb_create_iterator (priv->db, priv->roptions);
 
     leveldb_iter_seek (it, hash, strlen (hash));
     while (leveldb_iter_valid (it))
@@ -135,11 +152,7 @@ g_reminder_db_private_get_item (GReminderDbPrivate *priv,
         leveldb_iter_next (it);
     }
 
-    leveldb_iter_destroy (it); /* TODO: cleanup */
-
-    GReminderItem *item = g_reminder_item_new (keywords, contents);
-    g_slist_free_full (keywords, g_free); /* TODO: cleanup */
-    return item;
+    return g_reminder_item_new (keywords, contents);
 }
 
 static gboolean
@@ -191,7 +204,7 @@ g_reminder_db_find (GReminderDb *self,
     GReminderDbPrivate *priv = g_reminder_db_get_instance_private (self);
 
     GSList *hashs = NULL, *items = NULL;
-    gchar **ks = g_strsplit (keywords, " ", -1);
+    G_REMINDER_CLEANUP_STRFREEV gchar **ks = g_strsplit (keywords, " ", -1);
 
     for (gchar **k = ks; *k; ++k)
     {
@@ -224,7 +237,6 @@ g_reminder_db_find (GReminderDb *self,
     }
 
     g_slist_free_full (hashs, g_free);
-    g_strfreev (ks); /* TODO: cleanup */
     return items;
 }
 

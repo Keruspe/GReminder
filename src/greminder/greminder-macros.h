@@ -33,9 +33,10 @@ G_BEGIN_DECLS
 #define G_REMINDER_CLEANUP(fun) __attribute__((cleanup(fun)))
 
 #define G_REMINDER_CLEANUP_FREE       G_REMINDER_CLEANUP (g_reminder_free_ptr)
+#define G_REMINDER_CLEANUP_STRFREEV   G_REMINDER_CLEANUP (g_reminder_strfreev_ptr)
 #define G_REMINDER_CLEANUP_ERROR_FREE G_REMINDER_CLEANUP (g_reminder_error_free_ptr)
 
-#define G_REMINDER_CLEANUP_UNREF G_REMINDER_CLEANUP (g_reminder_unref_ptr)
+#define G_REMINDER_CLEANUP_UNREF      G_REMINDER_CLEANUP (g_reminder_unref_ptr)
 
 #define G_REMINDER_TRIVIAL_CLEANUP_FUN_FULL(name, type, fun, param_type) \
     static inline void                                                   \
@@ -49,6 +50,7 @@ G_BEGIN_DECLS
 
 G_REMINDER_TRIVIAL_CLEANUP_FUN_FULL (free,       gpointer,  g_free,         gpointer)
 
+G_REMINDER_TRIVIAL_CLEANUP_FUN      (strfreev,   GStrv,     g_strfreev)
 G_REMINDER_TRIVIAL_CLEANUP_FUN      (error_free, GError *,  g_error_free)
 
 G_REMINDER_TRIVIAL_CLEANUP_FUN_FULL (unref,      GObject *, g_object_unref, gpointer)
