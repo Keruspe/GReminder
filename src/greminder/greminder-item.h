@@ -41,16 +41,6 @@ const GSList *g_reminder_item_get_keywords (const GReminderItem *self);
 const gchar  *g_reminder_item_get_contents (const GReminderItem *self);
 const gchar  *g_reminder_item_get_checksum (const GReminderItem *self);
 
-void g_reminder_item_add_keyword  (GReminderItem *self,
-                                   const gchar   *keyword);
-void g_reminder_item_del_keyword  (GReminderItem *self,
-                                   const gchar   *keyword);
-void g_reminder_item_set_contents (GReminderItem *self,
-                                   const gchar   *contents);
-
-gboolean g_reminder_item_equals (const GReminderItem *self,
-                                 const GReminderItem *other);
-
 GReminderItem *g_reminder_item_new (const GSList *keywords,
                                     const gchar  *contents);
 

@@ -59,89 +59,6 @@ g_reminder_item_get_checksum (const GReminderItem *self)
 }
 
 static void
-g_reminder_item_private_add_keyword (GReminderItemPrivate *priv,
-                                     const gchar          *keyword)
-{
-    priv->keywords = g_slist_append (priv->keywords, g_strdup (keyword));
-}
-
-G_REMINDER_VISIBLE void
-g_reminder_item_add_keyword (GReminderItem *self,
-                             const gchar   *keyword)
-{
-    g_return_if_fail (G_REMINDER_IS_ITEM (self));
-
-    GReminderItemPrivate *priv = g_reminder_item_get_instance_private ((GReminderItem *) self);
-
-    g_reminder_item_private_add_keyword (priv, keyword);
-}
-
-G_REMINDER_VISIBLE void
-g_reminder_item_del_keyword (GReminderItem *self,
-                             const gchar   *keyword)
-{
-    g_return_if_fail (G_REMINDER_IS_ITEM (self));
-
-    GReminderItemPrivate *priv = g_reminder_item_get_instance_private ((GReminderItem *) self);
-
-    for (GSList *k = priv->keywords; k; k = g_slist_next (k))
-    {
-        gchar *kk = k->data;
-
-        if (!g_strcmp0 (kk, keyword))
-        {
-            g_free (kk);
-            priv->keywords = g_slist_delete_link (priv->keywords, k);
-            break;
-        }
-    }
-}
-
-static void
-g_reminder_item_private_update_checksum (GReminderItemPrivate *priv)
-{
-    g_free (priv->checksum);
-    priv->checksum = g_compute_checksum_for_string (G_CHECKSUM_SHA1, priv->contents, -1);
-}
-
-G_REMINDER_VISIBLE void
-g_reminder_item_set_contents (GReminderItem *self,
-                              const gchar   *contents)
-{
-    g_return_if_fail (G_REMINDER_IS_ITEM (self));
-
-    GReminderItemPrivate *priv = g_reminder_item_get_instance_private ((GReminderItem *) self);
-
-    g_free (priv->contents);
-    priv->contents = g_strdup (contents);
-    g_reminder_item_private_update_checksum (priv);
-}
-
-G_REMINDER_VISIBLE gboolean
-g_reminder_item_equals (const GReminderItem *self,
-                        const GReminderItem *other)
-{
-    g_return_val_if_fail (G_REMINDER_IS_ITEM (self), FALSE);
-    g_return_val_if_fail (G_REMINDER_IS_ITEM (other), FALSE);
-
-    GReminderItemPrivate *priv = g_reminder_item_get_instance_private ((GReminderItem *) self);
-    GReminderItemPrivate *opriv = g_reminder_item_get_instance_private ((GReminderItem *) other);
-
-    if (g_strcmp0 (priv->contents, opriv->contents))
-        return FALSE;
-
-    for (GSList *k = priv->keywords, *ok = opriv->keywords; k || ok; k = g_slist_next (k), ok = g_slist_next (ok))
-    {
-        if (!k || !ok)
-            return FALSE;
-        if (g_strcmp0 (k->data, ok->data))
-            return FALSE;
-    }
-
-    return TRUE;
-}
-
-static void
 g_reminder_item_finalize (GObject *object)
 {
     GReminderItemPrivate *priv = g_reminder_item_get_instance_private (G_REMINDER_ITEM (object));
@@ -165,7 +82,6 @@ g_reminder_item_init (GReminderItem *self)
     GReminderItemPrivate *priv = g_reminder_item_get_instance_private ((GReminderItem *) self);
     
     priv->keywords = NULL;
-    priv->checksum = NULL;
 }
 
 G_REMINDER_VISIBLE GReminderItem *
@@ -179,10 +95,10 @@ g_reminder_item_new (const GSList *keywords,
     GReminderItemPrivate *priv = g_reminder_item_get_instance_private ((GReminderItem *) self);
 
     priv->contents = g_strdup (contents);
-    g_reminder_item_private_update_checksum (priv);
+    priv->checksum = g_compute_checksum_for_string (G_CHECKSUM_SHA1, priv->contents, -1);
 
     for (const GSList *k = keywords; k; k = g_slist_next (k))
-        g_reminder_item_private_add_keyword (priv, k->data);
+        priv->keywords = g_slist_append (priv->keywords, g_strdup (k->data));
 
     return self;
 }
