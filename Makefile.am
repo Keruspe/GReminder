@@ -38,7 +38,6 @@ AM_CFLAGS =            \
 AM_LIBS =            \
 	$(GLIB_LIBS) \
 	$(GTK_LIBS)  \
-	-lleveldb    \
 	$(NULL)
 
 EXTRA_DIST =                      \

@@ -127,6 +127,8 @@ GLIB_GSETTINGS
 PKG_CHECK_MODULES(GTK, [gdk-3.0 >= $GTK_REQUIRED gtk+-3.0 >= $GTK_REQUIRED])
 PKG_CHECK_MODULES(GDK_PIXBUF, [gdk-pixbuf-2.0 >= 2.26])
 
+AC_CHECK_LIB([leveldb], [leveldb_open], [], [AC_MSG_FAILURE([libleveldb not found])], [])
+
 AC_CONFIG_FILES([
     Makefile
     po/Makefile.in
