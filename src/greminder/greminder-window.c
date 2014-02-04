@@ -130,6 +130,9 @@ on_search (GtkEntry *entry,
 
     GSList *items = g_reminder_db_find (priv->db, gtk_entry_get_text (entry));
 
+    if (!items)
+        return;
+
     GtkWidget *listbox = gtk_list_box_new ();
     priv->listbox = GTK_LIST_BOX (listbox);
     priv->c_signals[G_REMINDER_ACTION_LAST + 1] = g_signal_connect (G_OBJECT (listbox),
