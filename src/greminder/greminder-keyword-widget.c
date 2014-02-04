@@ -65,6 +65,7 @@ static void
 g_reminder_keyword_widget_private_toggle_active (GReminderKeywordWidgetPrivate *priv)
 {
     priv->active = !priv->active;
+    gtk_widget_set_sensitive (GTK_WIDGET (priv->entry), priv->active);
     gtk_editable_set_editable (GTK_EDITABLE (priv->entry), priv->active);
     gtk_button_set_label (priv->button, priv->active ? "+" : "-");
 }
@@ -132,10 +133,13 @@ g_reminder_keyword_widget_class_init (GReminderKeywordWidgetClass *klass)
 static void
 g_reminder_keyword_widget_init (GReminderKeywordWidget *self)
 {
+    static GdkRGBA white = { 255, 255, 255, 0.5 };
+
     GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private ((GReminderKeywordWidget *) self);
 
     GtkWidget *entry = gtk_entry_new ();
     priv->entry = GTK_ENTRY (entry);
+    gtk_widget_override_color (entry, GTK_STATE_FLAG_INSENSITIVE, &white);
     GtkWidget *button = gtk_button_new_with_label ("+");
     priv->button = GTK_BUTTON (button);
 
