@@ -1,2 +1,3 @@
 data validation
 check for leveldb in configure
+constify some stuff

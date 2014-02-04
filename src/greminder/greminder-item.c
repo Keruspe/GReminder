@@ -117,6 +117,30 @@ g_reminder_item_set_contents (GReminderItem *self,
     g_reminder_item_private_update_checksum (priv);
 }
 
+G_REMINDER_VISIBLE gboolean
+g_reminder_item_equals (const GReminderItem *self,
+                        const GReminderItem *other)
+{
+    g_return_val_if_fail (G_REMINDER_IS_ITEM (self), FALSE);
+    g_return_val_if_fail (G_REMINDER_IS_ITEM (other), FALSE);
+
+    GReminderItemPrivate *priv = g_reminder_item_get_instance_private ((GReminderItem *) self);
+    GReminderItemPrivate *opriv = g_reminder_item_get_instance_private ((GReminderItem *) other);
+
+    if (g_strcmp0 (priv->contents, opriv->contents))
+        return FALSE;
+
+    for (GSList *k = priv->keywords, *ok = opriv->keywords; k || ok; k = g_slist_next (k), ok = g_slist_next (ok))
+    {
+        if (!k || !ok)
+            return FALSE;
+        if (g_strcmp0 (k->data, ok->data))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void
 g_reminder_item_finalize (GObject *object)
 {

@@ -48,6 +48,9 @@ void g_reminder_item_del_keyword  (GReminderItem *self,
 void g_reminder_item_set_contents (GReminderItem *self,
                                    const gchar   *contents);
 
+gboolean g_reminder_item_equals (const GReminderItem *self,
+                                 const GReminderItem *other);
+
 GReminderItem *g_reminder_item_new (const GSList *keywords,
                                     const gchar  *contents);
 

@@ -90,7 +90,7 @@ ON_ACTION_PROTO (edit)
     G_REMINDER_CLEANUP_UNREF GReminderItem *old = g_object_ref (priv->item);
     on_save (actions, user_data);
 
-    if (g_strcmp0 (g_reminder_item_get_contents (old), g_reminder_item_get_contents (priv->item))) /* FIXME: g_reminder_item_equals (for keywords) */
+    if (!g_reminder_item_equals (old, priv->item))
         g_reminder_db_delete (priv->db, old);
 }
 

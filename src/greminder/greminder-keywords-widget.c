@@ -48,7 +48,9 @@ g_reminder_keywords_widget_get_keywords (GReminderKeywordsWidget *self)
     for (GSList *k = priv->keywords; k; k = g_slist_next (k))
     {
         _Keyword *_k = k->data;
-        ks = g_slist_append (ks, (gpointer) g_reminder_keyword_widget_get_keyword (_k->keyword));
+        const gchar *keyword = g_reminder_keyword_widget_get_keyword (_k->keyword);
+        if (keyword[0])
+            ks = g_slist_append (ks, (gpointer) keyword);
     }
 
     return ks;
