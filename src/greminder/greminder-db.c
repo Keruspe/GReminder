@@ -199,6 +199,32 @@ g_reminder_db_delete (const GReminderDb   *self,
     return TRUE;
 }
 
+G_REMINDER_VISIBLE gboolean
+g_reminder_db_delete_key (const GReminderDb *self,
+                          const gchar       *key)
+{
+    g_return_val_if_fail (G_REMINDER_IS_DB (self), FALSE);
+    g_return_val_if_fail (key, FALSE);
+
+    GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
+
+    return g_reminder_db_private_delete (priv, key, strlen (key));
+}
+
+G_REMINDER_VISIBLE gboolean
+g_reminder_db_delete_with_suffix (const GReminderDb *self,
+                                  const gchar       *key,
+                                  const gchar       *suffix)
+{
+    g_return_val_if_fail (G_REMINDER_IS_DB (self), FALSE);
+    g_return_val_if_fail (key, FALSE);
+    g_return_val_if_fail (suffix, FALSE);
+
+    GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
+
+    return g_reminder_db_private_delete_suffix (priv, key, suffix);
+}
+
 G_REMINDER_VISIBLE GSList *
 g_reminder_db_find (const GReminderDb *self,
                     const gchar       *keywords)

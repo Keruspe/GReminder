@@ -43,6 +43,13 @@ gboolean g_reminder_db_save (const GReminderDb   *self,
 gboolean g_reminder_db_delete (const GReminderDb   *self,
                                const GReminderItem *item);
 
+gboolean g_reminder_db_delete_key (const GReminderDb *self,
+                                   const gchar       *key);
+
+gboolean g_reminder_db_delete_with_suffix (const GReminderDb *self,
+                                           const gchar       *key,
+                                           const gchar       *suffix);
+
 GSList *g_reminder_db_find (const GReminderDb *self,
                             const gchar       *keywords);
 

@@ -90,8 +90,25 @@ ON_ACTION_PROTO (edit)
     G_REMINDER_CLEANUP_UNREF GReminderItem *old = g_object_ref (priv->item);
     on_save (actions, user_data);
 
-    if (!g_reminder_item_equals (old, priv->item))
-        g_reminder_db_delete (priv->db, old);
+    if (g_strcmp0 (g_reminder_item_get_contents (old), g_reminder_item_get_contents (priv->item)))
+        g_reminder_db_delete_key (priv->db, g_reminder_item_get_checksum (old));
+
+    const gchar *checksum = g_reminder_item_get_checksum (old);
+    const GSList *_kk = g_reminder_item_get_keywords (priv->item);
+    for (const GSList *k = g_reminder_item_get_keywords (old); k; k = g_slist_next (k))
+    {
+        gboolean found = FALSE;
+        for (const GSList *kk = _kk; kk; kk = g_slist_next (kk))
+        {
+            if (!g_strcmp0 (k->data, kk->data))
+                found = TRUE;
+        }
+        if (!found)
+        {
+            g_reminder_db_delete_with_suffix (priv->db, k->data, checksum);
+            g_reminder_db_delete_with_suffix (priv->db, checksum, k->data);
+        }
+    }
 }
 
 static void
