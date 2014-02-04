@@ -54,7 +54,7 @@ G_REMINDER_VISIBLE void
 g_reminder_keyword_widget_set_keyword (GReminderKeywordWidget *self,
                                        const gchar            *keyword)
 {
-    g_return_val_if_fail (G_REMINDER_IS_KEYWORD_WIDGET (self), NULL);
+    g_return_if_fail (G_REMINDER_IS_KEYWORD_WIDGET (self));
 
     GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private (self);
 

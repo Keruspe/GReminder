@@ -165,11 +165,9 @@ G_REMINDER_VISIBLE void
 g_reminder_db_delete (GReminderDb   *self,
                       GReminderItem *item)
 {
-    g_return_val_if_fail (G_REMINDER_IS_DB (self), NULL);
+    g_return_if_fail (G_REMINDER_IS_DB (self));
 
     GReminderDbPrivate *priv = g_reminder_db_get_instance_private (self);
-
-    G_REMINDER_CLEANUP_FREE gchar *err = NULL;
 
     const gchar *checksum = g_reminder_item_get_checksum (item);
 
