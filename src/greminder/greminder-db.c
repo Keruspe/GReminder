@@ -77,12 +77,12 @@ static gchar *sdup (const gchar *in, size_t *s)
     return out;
 }
 
-G_REMINDER_VISIBLE void
+G_REMINDER_VISIBLE gboolean
 g_reminder_db_save (GReminderDb   *self,
                     GReminderItem *item)
 {
-    g_return_if_fail (G_REMINDER_IS_DB (self));
-    g_return_if_fail (G_REMINDER_IS_ITEM (item));
+    g_return_val_if_fail (G_REMINDER_IS_DB (self), FALSE);
+    g_return_val_if_fail (G_REMINDER_IS_ITEM (item), FALSE);
 
     GReminderDbPrivate *priv = g_reminder_db_get_instance_private (self);
     
@@ -90,14 +90,16 @@ g_reminder_db_save (GReminderDb   *self,
     const gchar *checksum = g_reminder_item_get_checksum (item);
 
     if (!g_reminder_db_private_put (priv, checksum, strlen (checksum), contents))
-        return; /* TODO: GError */
+        return FALSE;
 
     for (const GSList *k = g_reminder_item_get_keywords (item); k; k = g_slist_next (k))
     {
         if (!g_reminder_db_private_put_suffix (priv, k->data, checksum) ||
             !g_reminder_db_private_put_suffix (priv, checksum, k->data))
-                return; /* TODO: GError */
+                return FALSE;
     }
+
+    return TRUE;
 }
 
 static GSList *
@@ -134,7 +136,7 @@ g_reminder_db_private_get_item (GReminderDbPrivate *priv,
     size_t hlen = strlen (hash);
     size_t len;
     G_REMINDER_CLEANUP_FREE gchar *contents = sdup (leveldb_get (priv->db, priv->roptions, hash, hlen, &len, &err), &len);
-    if (err) /* TODO: handle */
+    if (err)
         return NULL;
 
     it = leveldb_create_iterator (priv->db, priv->roptions);
@@ -174,25 +176,27 @@ g_reminder_db_private_delete_suffix (GReminderDbPrivate *priv,
     return g_reminder_db_private_delete (priv, _key, strlen (key) + strlen (suffix) + 1);
 }
 
-G_REMINDER_VISIBLE void
+G_REMINDER_VISIBLE gboolean
 g_reminder_db_delete (GReminderDb   *self,
                       GReminderItem *item)
 {
-    g_return_if_fail (G_REMINDER_IS_DB (self));
+    g_return_val_if_fail (G_REMINDER_IS_DB (self), FALSE);
 
     GReminderDbPrivate *priv = g_reminder_db_get_instance_private (self);
 
     const gchar *checksum = g_reminder_item_get_checksum (item);
 
     if (!g_reminder_db_private_delete (priv, checksum, strlen (checksum)))
-        return; /* TODO: GError */
+        return FALSE;
 
     for (const GSList *k = g_reminder_item_get_keywords (item); k; k = g_slist_next (k))
     {
         if (!g_reminder_db_private_delete_suffix (priv, k->data, checksum) ||
             !g_reminder_db_private_delete_suffix (priv, checksum, k->data))
-                return; /* TODO: GError */
+                return FALSE;
     }
+
+    return TRUE;
 }
 
 G_REMINDER_VISIBLE GSList *
@@ -289,5 +293,5 @@ g_reminder_db_new (void)
         return self;
 
     g_object_unref (self);
-    return NULL; /* TODO: GError */
+    return NULL;
 }

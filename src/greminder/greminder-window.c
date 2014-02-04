@@ -70,8 +70,8 @@ ON_ACTION_PROTO (delete)
 {
     GReminderWindowPrivate *priv = user_data;
 
-    g_reminder_db_delete (priv->db, priv->item);
-    on_new (actions, user_data);
+    if (g_reminder_db_delete (priv->db, priv->item))
+        on_new (actions, user_data);
 }
 
 ON_ACTION_PROTO (save)
@@ -79,8 +79,8 @@ ON_ACTION_PROTO (save)
     GReminderWindowPrivate *priv = user_data;
 
     g_reminder_window_private_set_item (priv);
-    g_reminder_db_save (priv->db, priv->item);
-    g_reminder_actions_set_editable (priv->actions, TRUE);
+    if (g_reminder_db_save (priv->db, priv->item))
+        g_reminder_actions_set_editable (priv->actions, TRUE);
 }
 
 ON_ACTION_PROTO (edit)
