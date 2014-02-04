@@ -78,13 +78,13 @@ static gchar *sdup (const gchar *in, size_t *s)
 }
 
 G_REMINDER_VISIBLE gboolean
-g_reminder_db_save (GReminderDb   *self,
-                    GReminderItem *item)
+g_reminder_db_save (const GReminderDb   *self,
+                    const GReminderItem *item)
 {
     g_return_val_if_fail (G_REMINDER_IS_DB (self), FALSE);
     g_return_val_if_fail (G_REMINDER_IS_ITEM (item), FALSE);
 
-    GReminderDbPrivate *priv = g_reminder_db_get_instance_private (self);
+    GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
     
     const gchar *contents = g_reminder_item_get_contents (item);
     const gchar *checksum = g_reminder_item_get_checksum (item);
@@ -177,12 +177,12 @@ g_reminder_db_private_delete_suffix (GReminderDbPrivate *priv,
 }
 
 G_REMINDER_VISIBLE gboolean
-g_reminder_db_delete (GReminderDb   *self,
-                      GReminderItem *item)
+g_reminder_db_delete (const GReminderDb   *self,
+                      const GReminderItem *item)
 {
     g_return_val_if_fail (G_REMINDER_IS_DB (self), FALSE);
 
-    GReminderDbPrivate *priv = g_reminder_db_get_instance_private (self);
+    GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
 
     const gchar *checksum = g_reminder_item_get_checksum (item);
 
@@ -200,12 +200,12 @@ g_reminder_db_delete (GReminderDb   *self,
 }
 
 G_REMINDER_VISIBLE GSList *
-g_reminder_db_find (GReminderDb *self,
-                    const gchar *keywords)
+g_reminder_db_find (const GReminderDb *self,
+                    const gchar       *keywords)
 {
     g_return_val_if_fail (G_REMINDER_IS_DB (self), NULL);
 
-    GReminderDbPrivate *priv = g_reminder_db_get_instance_private (self);
+    GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
 
     GSList *hashs = NULL, *items = NULL;
     G_REMINDER_CLEANUP_STRFREEV gchar **ks = g_strsplit (keywords, " ", -1);

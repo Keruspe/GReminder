@@ -27,11 +27,11 @@ struct _GReminderRowPrivate
 G_DEFINE_TYPE_WITH_PRIVATE (GReminderRow, g_reminder_row, GTK_TYPE_LIST_BOX_ROW)
 
 G_REMINDER_VISIBLE GReminderItem *
-g_reminder_row_get_item (GReminderRow *self)
+g_reminder_row_get_item (const GReminderRow *self)
 {
     g_return_val_if_fail (G_REMINDER_IS_ROW (self), NULL);
 
-    GReminderRowPrivate *priv = g_reminder_row_get_instance_private (self);
+    GReminderRowPrivate *priv = g_reminder_row_get_instance_private ((GReminderRow *) self);
 
     return priv->item;
 }

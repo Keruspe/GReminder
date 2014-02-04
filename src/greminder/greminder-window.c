@@ -141,7 +141,7 @@ on_search (GtkEntry *entry,
                                                                     priv);
 
     GtkContainer *lb = GTK_CONTAINER (listbox);
-    for (GSList *i = items; i; i = g_slist_next (i))
+    for (const GSList *i = items; i; i = g_slist_next (i))
         gtk_container_add (lb, g_reminder_row_new (i->data));
 
     GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);

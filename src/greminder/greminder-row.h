@@ -37,7 +37,7 @@ typedef struct _GReminderRowClass GReminderRowClass;
 G_REMINDER_VISIBLE
 GType g_reminder_row_get_type (void);
 
-GReminderItem *g_reminder_row_get_item (GReminderRow *self);
+GReminderItem *g_reminder_row_get_item (const GReminderRow *self);
 
 GtkWidget *g_reminder_row_new (GReminderItem *item);
 

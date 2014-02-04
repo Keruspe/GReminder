@@ -41,11 +41,11 @@ enum
 static guint signals[LAST_SIGNAL] = { 0 };
 
 G_REMINDER_VISIBLE const gchar *
-g_reminder_keyword_widget_get_keyword (GReminderKeywordWidget *self)
+g_reminder_keyword_widget_get_keyword (const GReminderKeywordWidget *self)
 {
     g_return_val_if_fail (G_REMINDER_IS_KEYWORD_WIDGET (self), NULL);
 
-    GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private (self);
+    GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private ((GReminderKeywordWidget *) self);
 
     return gtk_entry_get_text (priv->entry);
 }

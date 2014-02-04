@@ -37,14 +37,14 @@ typedef struct _GReminderDbClass GReminderDbClass;
 G_REMINDER_VISIBLE
 GType g_reminder_db_get_type (void);
 
-gboolean g_reminder_db_save (GReminderDb   *self,
-                             GReminderItem *item);
+gboolean g_reminder_db_save (const GReminderDb   *self,
+                             const GReminderItem *item);
 
-gboolean g_reminder_db_delete (GReminderDb   *self,
-                               GReminderItem *item);
+gboolean g_reminder_db_delete (const GReminderDb   *self,
+                               const GReminderItem *item);
 
-GSList *g_reminder_db_find (GReminderDb *self,
-                            const gchar *keywords);
+GSList *g_reminder_db_find (const GReminderDb *self,
+                            const gchar       *keywords);
 
 GReminderDb *g_reminder_db_new (void);
 

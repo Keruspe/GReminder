@@ -36,12 +36,12 @@ typedef struct
     gulong                   signal;
 } _Keyword;
 
-G_REMINDER_VISIBLE GSList *
-g_reminder_keywords_widget_get_keywords (GReminderKeywordsWidget *self)
+G_REMINDER_VISIBLE const GSList *
+g_reminder_keywords_widget_get_keywords (const GReminderKeywordsWidget *self)
 {
     g_return_val_if_fail (G_REMINDER_IS_KEYWORDS_WIDGET (self), NULL);
 
-    GReminderKeywordsWidgetPrivate *priv = g_reminder_keywords_widget_get_instance_private (self);
+    GReminderKeywordsWidgetPrivate *priv = g_reminder_keywords_widget_get_instance_private ((GReminderKeywordsWidget *) self);
 
     GSList *ks = NULL;
 
