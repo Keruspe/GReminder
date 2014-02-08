@@ -50,6 +50,8 @@ gboolean g_reminder_db_delete_with_suffix (const GReminderDb *self,
                                            const gchar       *key,
                                            const gchar       *suffix);
 
+GtkListStore *g_reminder_db_get_keywords (const GReminderDb *self);
+
 GSList *g_reminder_db_find (const GReminderDb *self,
                             const gchar       *keywords);
 

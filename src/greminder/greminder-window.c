@@ -315,5 +315,11 @@ g_reminder_window_new (GtkApplication *app,
 
     priv->db = g_object_ref (db);
 
+    GtkListStore *store = g_reminder_db_get_keywords (db);
+    GtkEntryCompletion *completion = gtk_entry_completion_new ();
+    gtk_entry_completion_set_text_column (completion, 0);
+    gtk_entry_completion_set_model (completion, GTK_TREE_MODEL (store));
+    gtk_entry_set_completion (GTK_ENTRY (priv->search), completion);
+
     return self;
 }

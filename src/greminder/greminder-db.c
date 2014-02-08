@@ -233,8 +233,9 @@ g_reminder_db_find (const GReminderDb *self,
 
     GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
 
-    GSList *hashs = NULL, *items = NULL;
     G_REMINDER_CLEANUP_STRFREEV gchar **ks = g_strsplit (keywords, " ", -1);
+    G_REMINDER_CLEANUP_SLIST_FREE GSList *hashs = NULL;
+    GSList *items = NULL;
 
     for (gchar **k = ks; *k; ++k)
     {
@@ -266,8 +267,72 @@ g_reminder_db_find (const GReminderDb *self,
         items = g_slist_prepend (items, item);
     }
 
-    g_slist_free_full (hashs, g_free);
     return items;
+}
+
+static GSList *
+g_reminder_db_private_get_keywords (GReminderDbPrivate *priv)
+{
+    GSList *keywords = NULL;
+    G_REMINDER_CLEANUP_DB_ITER_DESTROY leveldb_iterator_t *it = leveldb_create_iterator (priv->db, priv->roptions);
+    G_REMINDER_CLEANUP_FREE gchar *last_hash = NULL;
+
+    leveldb_iter_seek_to_first (it);
+
+    while (leveldb_iter_valid (it))
+    {
+        size_t len;
+        const gchar *key = leveldb_iter_key (it, &len);
+        gboolean has_nul = FALSE;
+        for (guint i = 0; i < len; ++i)
+        {
+            if (!key[i])
+            {
+                has_nul = TRUE;
+                break;
+            }
+        }
+        if (has_nul && !(last_hash && !g_strcmp0 (key, last_hash)))
+        {
+            gboolean found = FALSE;
+            for (const GSList *k = keywords; k; k = g_slist_next (k))
+            {
+                if (!g_strcmp0 (k->data, key))
+                {
+                    found = TRUE;
+                    break;
+                }
+            }
+            if (!found)
+                keywords = g_slist_prepend (keywords, sdup (key, &len));
+        }
+        else
+        {
+            g_free (last_hash);
+            last_hash = sdup (key, &len);
+        }
+        leveldb_iter_next (it);
+    }
+
+    return keywords;
+}
+
+G_REMINDER_VISIBLE GtkListStore *
+g_reminder_db_get_keywords (const GReminderDb *self)
+{
+    g_return_val_if_fail (G_REMINDER_IS_DB (self), NULL);
+
+    GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
+    GtkListStore *store = gtk_list_store_new (1, G_TYPE_STRING);
+    GtkTreeIter iter;
+
+    for (G_REMINDER_CLEANUP_SLIST_FREE GSList *k = g_reminder_db_private_get_keywords (priv); k; k = g_slist_next (k))
+    {
+        gtk_list_store_append (store, &iter);
+        gtk_list_store_set (store, &iter, 0, k->data, -1);
+    }
+
+    return store;
 }
 
 static void
