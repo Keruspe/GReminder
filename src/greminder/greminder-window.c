@@ -262,7 +262,6 @@ g_reminder_window_init (GReminderWindow *self)
     GtkGrid *g = GTK_GRID (grid);
     gtk_grid_set_column_spacing (g, 10);
     gtk_grid_set_row_spacing (g, 10);
-    g_object_set (G_OBJECT (grid), "margin", 12, NULL);
 
     GtkWidget *align = gtk_alignment_new (0, 0, 0, 0);
     gtk_container_add (GTK_CONTAINER (align), gtk_label_new ("Keywords:"));
@@ -309,6 +308,7 @@ g_reminder_window_new (GtkApplication *app,
                                       "application",     app,
                                       "type",            GTK_WINDOW_TOPLEVEL,
                                       "window-position", GTK_WIN_POS_CENTER,
+                                      "border-width",    12,
                                       "resizable",       FALSE,
                                       NULL);
     GReminderWindowPrivate *priv = g_reminder_window_get_instance_private (G_REMINDER_WINDOW (self));

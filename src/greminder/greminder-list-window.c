@@ -70,8 +70,6 @@ g_reminder_list_window_init (GReminderListWindow *self)
     GReminderListWindowPrivate *priv = g_reminder_list_window_get_instance_private ((GReminderListWindow *) self);
 
     GtkWidget *lbox = gtk_widget_new (GTK_TYPE_LIST_BOX,
-                                      "border-width",  2,
-                                      "margin",        12,
                                       "width-request", 500,
                                       NULL);
     priv->list = GTK_LIST_BOX (lbox);
@@ -92,6 +90,7 @@ g_reminder_list_window_new (GReminderWindow *win,
                                       "type",            GTK_WINDOW_TOPLEVEL,
                                       "window-position", GTK_WIN_POS_CENTER,
                                       "title",           title,
+                                      "border-width",    12,
                                       "resizable",       FALSE,
                                       NULL);
     GReminderListWindowPrivate *priv = g_reminder_list_window_get_instance_private (G_REMINDER_LIST_WINDOW (self));
