@@ -19,13 +19,20 @@
 
 #include "greminder-keyword-widget-private.h"
 
+typedef enum
+{
+    VALID,
+    INVALID,
+    MAYBE
+} Tribool;
+
 struct _GReminderKeywordWidgetPrivate
 {
     GtkEntry  *entry;
     GtkButton *button;
 
     gboolean   active;
-    gboolean   valid;
+    Tribool   valid;
 
     gulong     changed_id;
     gulong     button_pressed_id;
@@ -79,9 +86,11 @@ g_reminder_keyword_widget_set_valid (GReminderKeywordWidget *self,
 {
     GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private (self);
 
-    if (priv->valid != valid)
+    Tribool v = (valid) ? VALID : INVALID;
+
+    if (priv->valid != v)
     {
-        priv->valid = valid;
+        priv->valid = v;
 
         gtk_widget_set_sensitive (GTK_WIDGET (priv->button), valid);
 
@@ -185,7 +194,7 @@ g_reminder_keyword_widget_init (GReminderKeywordWidget *self)
     gtk_widget_set_sensitive (button, FALSE);
 
     priv->active = TRUE;
-    priv->valid = FALSE;
+    priv->valid = MAYBE;
 
     priv->changed_id = g_signal_connect (G_OBJECT (entry),
                                          "changed",
