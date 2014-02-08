@@ -25,6 +25,7 @@ bin_greminder_SOURCES =                                   \
 	src/greminder/greminder-item.h                    \
 	src/greminder/greminder-keyword-widget.h          \
 	src/greminder/greminder-keywords-widget.h         \
+	src/greminder/greminder-list-window.h             \
 	src/greminder/greminder-row.h                     \
 	src/greminder/greminder-window.h                  \
 	src/greminder/greminder-actions-private.h         \
@@ -32,6 +33,7 @@ bin_greminder_SOURCES =                                   \
 	src/greminder/greminder-item-private.h            \
 	src/greminder/greminder-keyword-widget-private.h  \
 	src/greminder/greminder-keywords-widget-private.h \
+	src/greminder/greminder-list-window-private.h     \
 	src/greminder/greminder-row-private.h             \
 	src/greminder/greminder-window-private.h          \
 	src/greminder/greminder-actions.c                 \
@@ -39,6 +41,7 @@ bin_greminder_SOURCES =                                   \
 	src/greminder/greminder-item.c                    \
 	src/greminder/greminder-keyword-widget.c          \
 	src/greminder/greminder-keywords-widget.c         \
+	src/greminder/greminder-list-window.c             \
 	src/greminder/greminder-row.c                     \
 	src/greminder/greminder-window.c                  \
 	src/greminder/greminder.c                         \

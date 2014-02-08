@@ -37,6 +37,9 @@ typedef struct _GReminderWindowClass GReminderWindowClass;
 G_REMINDER_VISIBLE
 GType g_reminder_window_get_type (void);
 
+void g_reminder_window_edit (GReminderWindow *self,
+                             GReminderItem   *item);
+
 GtkWidget *g_reminder_window_new (GtkApplication *app,
                                   GReminderDb    *db);
 

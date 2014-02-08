@@ -21,7 +21,7 @@
 
 #include "greminder-actions.h"
 #include "greminder-keywords-widget.h"
-#include "greminder-row.h"
+#include "greminder-list-window.h"
 
 struct _GReminderWindowPrivate
 {
@@ -34,13 +34,12 @@ struct _GReminderWindowPrivate
 
     GReminderItem           *item;
     GtkWindow               *list;
-    GtkListBox              *listbox;
 
     gboolean                 valid;
     gboolean                 kvalid;
     gboolean                 cvalid;
 
-    gulong                   c_signals[G_REMINDER_ACTION_LAST + 4];
+    gulong                   c_signals[G_REMINDER_ACTION_LAST + 3];
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (GReminderWindow, g_reminder_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -113,61 +112,36 @@ ON_ACTION_PROTO (edit)
     }
 }
 
-static void
-g_reminder_window_private_destroy_list (GReminderWindowPrivate *priv)
+G_REMINDER_VISIBLE void
+g_reminder_window_edit (GReminderWindow *self,
+                        GReminderItem   *item)
 {
-    if (priv->list)
-    {
-        g_signal_handler_disconnect (priv->listbox, priv->c_signals[G_REMINDER_ACTION_LAST + 3]);
-        gtk_window_close (priv->list);
-        priv->list = NULL;
-    }
-}
-
-static void
-on_row_activated (GtkListBox    *list_box G_GNUC_UNUSED,
-                  GtkListBoxRow *row,
-                  gpointer       user_data)
-{
-    GReminderWindowPrivate *priv = user_data;
+    GReminderWindowPrivate *priv = g_reminder_window_get_instance_private (self);
 
     g_clear_object (&priv->item);
-    priv->item = g_object_ref (g_reminder_row_get_item (G_REMINDER_ROW (row)));
+    priv->item = g_object_ref (item);
+
+    priv->list = NULL;
 
     g_reminder_actions_set_state (priv->actions, G_REMINDER_STATE_EDITABLE);
-    g_reminder_keywords_widget_reset_with_data (priv->keywords, g_reminder_item_get_keywords (priv->item));
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (priv->text), g_reminder_item_get_contents (priv->item), -1);
-
-    g_reminder_window_private_destroy_list (priv);
+    g_reminder_keywords_widget_reset_with_data (priv->keywords, g_reminder_item_get_keywords (item));
+    gtk_text_buffer_set_text (gtk_text_view_get_buffer (priv->text), g_reminder_item_get_contents (item), -1);
 }
 
 static void
 on_search (GtkEntry *entry,
            gpointer  user_data)
 {
-    GReminderWindowPrivate *priv = user_data;
+    GReminderWindow *self = user_data;
+    GReminderWindowPrivate *priv = g_reminder_window_get_instance_private (self);
 
     GSList *items = g_reminder_db_find (priv->db, gtk_entry_get_text (entry));
 
     if (!items)
         return;
 
-    GtkWidget *listbox = gtk_list_box_new ();
-    priv->listbox = GTK_LIST_BOX (listbox);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 3] = g_signal_connect (G_OBJECT (listbox),
-                                                                    "row-activated",
-                                                                    G_CALLBACK (on_row_activated),
-                                                                    priv);
-
-    GtkContainer *lb = GTK_CONTAINER (listbox);
-    for (const GSList *i = items; i; i = g_slist_next (i))
-        gtk_container_add (lb, g_reminder_row_new (i->data));
-
-    GtkWidget *win = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    priv->list = GTK_WINDOW (win);
-    gtk_container_add (GTK_CONTAINER (win), listbox);
-    gtk_widget_show_all (win);
-
+    priv->list = g_reminder_list_window_new (self, items);
+    gtk_widget_show_all (GTK_WIDGET (priv->list));
     g_slist_free_full (items, g_object_unref);
 }
 
@@ -242,7 +216,11 @@ g_reminder_window_dispose (GObject *object)
     g_clear_object (&priv->db);
     g_clear_object (&priv->item);
 
-    g_reminder_window_private_destroy_list (priv);
+    if (priv->list)
+    {
+        gtk_window_close (priv->list);
+        priv->list = NULL;
+    }
 
     G_OBJECT_CLASS (g_reminder_window_parent_class)->dispose (object);
 }
@@ -276,7 +254,7 @@ g_reminder_window_init (GReminderWindow *self)
     priv->c_signals[G_REMINDER_ACTION_LAST] = g_signal_connect (G_OBJECT (sentry),
                                                                 "activate",
                                                                 G_CALLBACK (on_search),
-                                                                priv);
+                                                                self);
     gtk_header_bar_pack_start (header_bar, sentry);
 
     GtkWidget *as = g_reminder_actions_new ();
