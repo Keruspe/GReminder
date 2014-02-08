@@ -33,7 +33,6 @@ struct _GReminderWindowPrivate
     GReminderDb             *db;
 
     GReminderItem           *item;
-    GtkWindow               *list;
 
     gboolean                 valid;
     gboolean                 kvalid;
@@ -121,8 +120,6 @@ g_reminder_window_edit (GReminderWindow *self,
     g_clear_object (&priv->item);
     priv->item = g_object_ref (item);
 
-    priv->list = NULL;
-
     g_reminder_actions_set_state (priv->actions, G_REMINDER_STATE_EDITABLE);
     g_reminder_keywords_widget_reset_with_data (priv->keywords, g_reminder_item_get_keywords (item));
     gtk_text_buffer_set_text (priv->text, g_reminder_item_get_contents (item), -1);
@@ -135,13 +132,13 @@ on_search (GtkEntry *entry,
     GReminderWindow *self = user_data;
     GReminderWindowPrivate *priv = g_reminder_window_get_instance_private (self);
 
-    GSList *items = g_reminder_db_find (priv->db, gtk_entry_get_text (entry));
+    const gchar *text = gtk_entry_get_text (entry);
+    GSList *items = g_reminder_db_find (priv->db, text);
 
     if (!items)
         return;
 
-    priv->list = g_reminder_list_window_new (self, items);
-    gtk_widget_show_all (GTK_WIDGET (priv->list));
+    gtk_widget_show_all (g_reminder_list_window_new (self, text, items));
     g_slist_free_full (items, g_object_unref);
 }
 
@@ -216,12 +213,6 @@ g_reminder_window_dispose (GObject *object)
     g_clear_object (&priv->db);
     g_clear_object (&priv->item);
 
-    if (priv->list)
-    {
-        gtk_window_close (priv->list);
-        priv->list = NULL;
-    }
-
     G_OBJECT_CLASS (g_reminder_window_parent_class)->dispose (object);
 }
 
@@ -237,7 +228,6 @@ g_reminder_window_init (GReminderWindow *self)
     GReminderWindowPrivate *priv = g_reminder_window_get_instance_private ((GReminderWindow *) self);
 
     priv->item = NULL;
-    priv->list = NULL;
     priv->valid = FALSE;
     priv->kvalid = FALSE;
     priv->cvalid = FALSE;

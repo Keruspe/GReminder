@@ -37,7 +37,8 @@ typedef struct _GReminderListWindowClass GReminderListWindowClass;
 G_REMINDER_VISIBLE
 GType g_reminder_list_window_get_type (void);
 
-GtkWindow *g_reminder_list_window_new (GReminderWindow *win,
+GtkWidget *g_reminder_list_window_new (GReminderWindow *win,
+                                       const gchar     *search,
                                        const GSList    *items);
 
 G_END_DECLS

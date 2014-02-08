@@ -78,13 +78,16 @@ g_reminder_list_window_init (GReminderListWindow *self)
     gtk_container_add (GTK_CONTAINER (self), lbox);
 }
 
-G_REMINDER_VISIBLE GtkWindow *
+G_REMINDER_VISIBLE GtkWidget *
 g_reminder_list_window_new (GReminderWindow *win,
+                            const gchar     *search,
                             const GSList    *items)
 {
+    G_REMINDER_CLEANUP_FREE gchar *title = g_strdup_printf ("Results for '%s'", search);
     GtkWidget *self = gtk_widget_new (G_REMINDER_TYPE_LIST_WINDOW,
                                       "type",            GTK_WINDOW_TOPLEVEL,
                                       "window-position", GTK_WIN_POS_CENTER,
+                                      "title",           title,
                                       "resizable",       FALSE,
                                       NULL);
     GReminderListWindowPrivate *priv = g_reminder_list_window_get_instance_private (G_REMINDER_LIST_WINDOW (self));
@@ -95,5 +98,5 @@ g_reminder_list_window_new (GReminderWindow *win,
     for (const GSList *i = items; i; i = g_slist_next (i))
         gtk_container_add (lb, g_reminder_row_new (i->data));
 
-    return GTK_WINDOW (self);
+    return self;
 }
