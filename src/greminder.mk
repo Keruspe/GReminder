@@ -20,6 +20,7 @@ bin_PROGRAMS +=       \
 	$(NULL)
 
 bin_greminder_SOURCES =                                   \
+	src/greminder/greminder-macros.h                  \
 	src/greminder/greminder-actions.h                 \
 	src/greminder/greminder-db.h                      \
 	src/greminder/greminder-item.h                    \
