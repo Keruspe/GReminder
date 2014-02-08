@@ -37,6 +37,8 @@ typedef struct _GReminderKeywordsWidgetClass GReminderKeywordsWidgetClass;
 G_REMINDER_VISIBLE
 GType g_reminder_keywords_widget_get_type (void);
 
+gboolean g_reminder_keywords_widget_is_valid (const GReminderKeywordsWidget *self);
+
 const GSList *g_reminder_keywords_widget_get_keywords (const GReminderKeywordsWidget *self);
 
 void g_reminder_keywords_widget_reset (GReminderKeywordsWidget *self);
