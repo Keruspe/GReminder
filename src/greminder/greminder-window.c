@@ -40,7 +40,7 @@ struct _GReminderWindowPrivate
     gboolean                 kvalid;
     gboolean                 cvalid;
 
-    gulong                   c_signals[G_REMINDER_ACTION_LAST + 3];
+    gulong                   c_signals[G_REMINDER_ACTION_LAST + 4];
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (GReminderWindow, g_reminder_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -54,7 +54,7 @@ static void
 g_reminder_window_private_set_item (GReminderWindowPrivate *priv)
 {
     const gchar *text;
-    g_object_get (G_OBJECT ((gtk_text_view_get_buffer (priv->text))), "text", &text, NULL);
+    g_object_get (G_OBJECT (gtk_text_view_get_buffer (priv->text)), "text", &text, NULL);
 
     g_clear_object (&priv->item);
     priv->item =  g_reminder_item_new (g_reminder_keywords_widget_get_keywords (priv->keywords), text);
@@ -118,7 +118,7 @@ g_reminder_window_private_destroy_list (GReminderWindowPrivate *priv)
 {
     if (priv->list)
     {
-        g_signal_handler_disconnect (priv->listbox, priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
+        g_signal_handler_disconnect (priv->listbox, priv->c_signals[G_REMINDER_ACTION_LAST + 3]);
         gtk_window_close (priv->list);
         priv->list = NULL;
     }
@@ -154,7 +154,7 @@ on_search (GtkEntry *entry,
 
     GtkWidget *listbox = gtk_list_box_new ();
     priv->listbox = GTK_LIST_BOX (listbox);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (listbox),
+    priv->c_signals[G_REMINDER_ACTION_LAST + 3] = g_signal_connect (G_OBJECT (listbox),
                                                                     "row-activated",
                                                                     G_CALLBACK (on_row_activated),
                                                                     priv);
@@ -197,6 +197,23 @@ on_valid_changed (GReminderKeywordsWidget *keywords G_GNUC_UNUSED,
     }
 }
 
+static void
+on_contents_changed (GtkTextBuffer *textbuffer,
+                     gpointer       user_data)
+{
+    GReminderWindowPrivate *priv = user_data;
+    
+    const gchar *text;
+    g_object_get (G_OBJECT (textbuffer), "text", &text, NULL);
+
+    gboolean valid = g_regex_match_simple ("[^ \t\r\b]", text, G_REGEX_MULTILINE, 0);
+    if (valid != priv->cvalid)
+    {
+        priv->cvalid = valid;
+        g_reminder_window_private_update_actions_state (priv);
+    }
+}
+
 static struct
 {
     const gchar *name;
@@ -219,6 +236,7 @@ g_reminder_window_dispose (GObject *object)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
         g_signal_handler_disconnect (priv->search, priv->c_signals[G_REMINDER_ACTION_LAST]);
         g_signal_handler_disconnect (priv->keywords, priv->c_signals[G_REMINDER_ACTION_LAST + 1]);
+        g_signal_handler_disconnect (gtk_text_view_get_buffer (priv->text), priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
     }
 
     g_clear_object (&priv->db);
@@ -296,12 +314,15 @@ g_reminder_window_init (GReminderWindow *self)
 
     GtkWidget *text = gtk_text_view_new ();
     priv->text = GTK_TEXT_VIEW (text);
+    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (gtk_text_view_get_buffer (priv->text)),
+                                                                    "changed",
+                                                                    G_CALLBACK (on_contents_changed),
+                                                                    priv);
     gtk_text_view_set_wrap_mode (priv->text, GTK_WRAP_WORD);
     GtkWidget *scroll = gtk_scrolled_window_new (NULL, NULL);
     GtkScrolledWindow *s = GTK_SCROLLED_WINDOW (scroll);
     gtk_scrolled_window_set_min_content_height (s, 500);
     gtk_scrolled_window_set_min_content_width (s, 800);
-    //gtk_scrolled_window_set_policy (s, GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_container_add (GTK_CONTAINER (scroll), text);
     gtk_grid_attach_next_to (g, scroll, align, GTK_POS_RIGHT, 2, 1);
 
