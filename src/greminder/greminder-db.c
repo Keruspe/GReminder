@@ -291,10 +291,44 @@ g_reminder_db_class_init (GReminderDbClass *klass)
     G_OBJECT_CLASS (klass)->finalize = g_reminder_db_finalize;
 }
 
+static gchar *
+g_reminder_db_get_dir_path (void)
+{
+    return g_build_filename (g_get_user_data_dir (), "greminder", NULL);
+}
+
+static GFile *
+g_reminder_db_get_dir (void)
+{
+    G_REMINDER_CLEANUP_FREE gchar *db_dir_path = g_reminder_db_get_dir_path ();
+    return g_file_new_for_path (db_dir_path);
+}
+
+static gchar *
+g_reminder_db_get_full_path (void)
+{
+    G_REMINDER_CLEANUP_FREE gchar *db_dir_path = g_reminder_db_get_dir_path ();
+    return g_build_filename (db_dir_path, "greminder.db", NULL);
+}
+
 static void
 g_reminder_db_init (GReminderDb *self)
 {
     GReminderDbPrivate *priv = g_reminder_db_get_instance_private ((GReminderDb *) self);
+
+    G_REMINDER_CLEANUP_UNREF GFile *db_dir = g_reminder_db_get_dir ();
+
+    if (!g_file_query_exists (db_dir, NULL))
+    {
+        G_REMINDER_CLEANUP_ERROR_FREE GError *error = NULL;
+        g_file_make_directory_with_parents (db_dir, NULL, &error);
+        if (error)
+        {
+            g_error ("Could not creade db directory: %s", error->message);
+            priv->db = NULL;
+            return;
+        }
+    }
 
     priv->options = leveldb_options_create ();
     leveldb_options_set_create_if_missing (priv->options, TRUE);
@@ -303,8 +337,9 @@ g_reminder_db_init (GReminderDb *self)
     priv->woptions = leveldb_writeoptions_create ();
     leveldb_writeoptions_set_sync (priv->woptions, TRUE);
 
+    G_REMINDER_CLEANUP_FREE gchar *db_full_path = g_reminder_db_get_full_path ();
     G_REMINDER_CLEANUP_FREE gchar *err = NULL;
-    priv->db = leveldb_open (priv->options, "greminder.db", &err);
+    priv->db = leveldb_open (priv->options, db_full_path, &err);
     if (err)
         priv->db = NULL;
 }
