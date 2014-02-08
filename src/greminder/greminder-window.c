@@ -26,7 +26,7 @@
 struct _GReminderWindowPrivate
 {
     GReminderKeywordsWidget *keywords;
-    GtkTextView             *text;
+    GtkTextBuffer           *text;
     GtkSearchEntry          *search;
 
     GReminderActions        *actions;
@@ -53,7 +53,7 @@ static void
 g_reminder_window_private_set_item (GReminderWindowPrivate *priv)
 {
     const gchar *text;
-    g_object_get (G_OBJECT (gtk_text_view_get_buffer (priv->text)), "text", &text, NULL);
+    g_object_get (G_OBJECT (priv->text), "text", &text, NULL);
 
     g_clear_object (&priv->item);
     priv->item =  g_reminder_item_new (g_reminder_keywords_widget_get_keywords (priv->keywords), text);
@@ -65,7 +65,7 @@ ON_ACTION_PROTO (new)
 
     g_clear_object (&priv->item);
     g_reminder_keywords_widget_reset (priv->keywords);
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (priv->text), "", -1);
+    gtk_text_buffer_set_text (priv->text, "", -1);
 }
 
 ON_ACTION_PROTO (delete)
@@ -125,7 +125,7 @@ g_reminder_window_edit (GReminderWindow *self,
 
     g_reminder_actions_set_state (priv->actions, G_REMINDER_STATE_EDITABLE);
     g_reminder_keywords_widget_reset_with_data (priv->keywords, g_reminder_item_get_keywords (item));
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (priv->text), g_reminder_item_get_contents (item), -1);
+    gtk_text_buffer_set_text (priv->text, g_reminder_item_get_contents (item), -1);
 }
 
 static void
@@ -210,7 +210,7 @@ g_reminder_window_dispose (GObject *object)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
         g_signal_handler_disconnect (priv->search, priv->c_signals[G_REMINDER_ACTION_LAST]);
         g_signal_handler_disconnect (priv->keywords, priv->c_signals[G_REMINDER_ACTION_LAST + 1]);
-        g_signal_handler_disconnect (gtk_text_view_get_buffer (priv->text), priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
+        g_signal_handler_disconnect (priv->text, priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
     }
 
     g_clear_object (&priv->db);
@@ -291,12 +291,13 @@ g_reminder_window_init (GReminderWindow *self)
     gtk_grid_attach (g, align, 0, 1, 1, 1);
 
     GtkWidget *text = gtk_text_view_new ();
-    priv->text = GTK_TEXT_VIEW (text);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (gtk_text_view_get_buffer (priv->text)),
+    GtkTextView *tv = GTK_TEXT_VIEW (text);
+    priv->text = gtk_text_view_get_buffer (tv);
+    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (priv->text),
                                                                     "changed",
                                                                     G_CALLBACK (on_contents_changed),
                                                                     priv);
-    gtk_text_view_set_wrap_mode (priv->text, GTK_WRAP_WORD);
+    gtk_text_view_set_wrap_mode (tv, GTK_WRAP_WORD);
     GtkWidget *scroll = gtk_scrolled_window_new (NULL, NULL);
     GtkScrolledWindow *s = GTK_SCROLLED_WINDOW (scroll);
     gtk_scrolled_window_set_min_content_height (s, 500);
