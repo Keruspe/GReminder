@@ -62,11 +62,23 @@ g_reminder_row_new (GReminderItem *item)
 {
     g_return_val_if_fail (G_REMINDER_IS_ITEM (item), NULL);
 
+    static const gchar *blacklist = " \t\n\r";
+
+    G_REMINDER_CLEANUP_FREE gchar *txt = g_strdup (g_reminder_item_get_contents (item));
+    for (gchar *c = txt; *c; ++c)
+    {
+        for (const gchar *b = blacklist; *b; ++b)
+        {
+            if (*c == *b)
+                *c = ' ';
+        }
+    }
+
     GtkWidget *self = gtk_widget_new (G_REMINDER_TYPE_ROW, NULL);
     GReminderRowPrivate *priv = g_reminder_row_get_instance_private (G_REMINDER_ROW (self));
 
     priv->item = g_object_ref (item);
-    gtk_container_add (GTK_CONTAINER (self), gtk_label_new (g_reminder_item_get_contents (item)));
+    gtk_container_add (GTK_CONTAINER (self), gtk_label_new (txt));
 
     return self;
 }
