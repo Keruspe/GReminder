@@ -69,9 +69,7 @@ g_reminder_list_window_init (GReminderListWindow *self)
 {
     GReminderListWindowPrivate *priv = g_reminder_list_window_get_instance_private ((GReminderListWindow *) self);
 
-    GtkWidget *lbox = gtk_widget_new (GTK_TYPE_LIST_BOX,
-                                      "width-request", 500,
-                                      NULL);
+    GtkWidget *lbox = gtk_list_box_new ();
     priv->list = GTK_LIST_BOX (lbox);
     priv->activated_id = g_signal_connect (G_OBJECT (lbox),
                                            "row-activated",

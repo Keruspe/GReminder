@@ -78,7 +78,13 @@ g_reminder_row_new (GReminderItem *item)
     GReminderRowPrivate *priv = g_reminder_row_get_instance_private (G_REMINDER_ROW (self));
 
     priv->item = g_object_ref (item);
-    gtk_container_add (GTK_CONTAINER (self), gtk_label_new (txt));
+    GtkWidget *label = gtk_label_new (txt);
+    GtkLabel *l = GTK_LABEL (label);
+    gtk_label_set_line_wrap (l, TRUE);
+    gtk_label_set_width_chars (l, 80);
+    gtk_label_set_max_width_chars (l, 80);
+    gtk_label_set_ellipsize (l, PANGO_ELLIPSIZE_END);
+    gtk_container_add (GTK_CONTAINER (self), label);
 
     return self;
 }
