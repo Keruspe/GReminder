@@ -46,11 +46,18 @@ typedef enum
     G_REMINDER_ACTION_LAST
 } GReminderAction;
 
+typedef enum
+{
+    G_REMINDER_STATE_BLANK,
+    G_REMINDER_STATE_VALID,
+    G_REMINDER_STATE_EDITABLE
+} GReminderState;
+
 G_REMINDER_VISIBLE
 GType g_reminder_actions_get_type (void);
 
-void g_reminder_actions_set_editable (GReminderActions *self,
-                                      gboolean          editable);
+void g_reminder_actions_set_state (GReminderActions *self,
+                                   GReminderState    state);
 
 GtkWidget *g_reminder_actions_new (void);
 

@@ -29,15 +29,30 @@ struct _GReminderActionsPrivate
 G_DEFINE_TYPE_WITH_PRIVATE (GReminderActions, g_reminder_actions, GTK_TYPE_BOX)
 
 G_REMINDER_VISIBLE void
-g_reminder_actions_set_editable (GReminderActions *self,
-                                 gboolean          editable)
+g_reminder_actions_set_state (GReminderActions *self,
+                              GReminderState    state)
 {
     g_return_if_fail (G_REMINDER_IS_ACTIONS (self));
 
     GReminderActionsPrivate *priv = g_reminder_actions_get_instance_private (self);
 
-    gtk_widget_set_sensitive (GTK_WIDGET (priv->actions[G_REMINDER_ACTION_DELETE]), editable);
-    gtk_widget_set_sensitive (GTK_WIDGET (priv->actions[G_REMINDER_ACTION_EDIT]),   editable);
+    gboolean active[G_REMINDER_ACTION_LAST] = { FALSE };
+
+    switch (state)
+    {
+    case G_REMINDER_STATE_EDITABLE:
+        active[G_REMINDER_ACTION_DELETE] = TRUE;
+        active[G_REMINDER_ACTION_EDIT] = TRUE;
+        /* fallthrough */
+    case G_REMINDER_STATE_VALID:
+        active[G_REMINDER_ACTION_SAVE] = TRUE;
+        /* fallthrough */
+    case G_REMINDER_STATE_BLANK:
+        active[G_REMINDER_ACTION_NEW] = TRUE;
+    }
+
+    for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
+        gtk_widget_set_sensitive (GTK_WIDGET (priv->actions[a]), active[a]);
 }
 
 #define ON_BUTTON_PRESSED_PROTO(name)           \
@@ -45,14 +60,15 @@ g_reminder_actions_set_editable (GReminderActions *self,
     on_##name (GtkButton *button G_GNUC_UNUSED, \
                gpointer   user_data)
 
-#define ON_BUTTON_PRESSED(action, name)                            \
-    ON_BUTTON_PRESSED_PROTO (name)                                 \
-    {                                                              \
-        GReminderActions *self = user_data;                        \
-        g_signal_emit (self,                                       \
-                       actions[G_REMINDER_ACTION_##action].signal, \
-                       0, /* detail */                             \
-                       NULL);                                      \
+#define ON_BUTTON_PRESSED(action, name)                                                 \
+    ON_BUTTON_PRESSED_PROTO (name)                                                      \
+    {                                                                                   \
+        GReminderActions *self = user_data;                                             \
+        g_reminder_actions_set_state (self, actions[G_REMINDER_ACTION_##action].state); \
+        g_signal_emit (self,                                                            \
+                       actions[G_REMINDER_ACTION_##action].signal,                      \
+                       0, /* detail */                                                  \
+                       NULL);                                                           \
     }
 
 ON_BUTTON_PRESSED_PROTO (new);
@@ -61,15 +77,16 @@ ON_BUTTON_PRESSED_PROTO (edit);
 ON_BUTTON_PRESSED_PROTO (save);
 
 static struct {
-    guint        signal;
-    const gchar *name;
-    const gchar *label;
-    GCallback    callback;
+    guint          signal;
+    const gchar   *name;
+    const gchar   *label;
+    GCallback      callback;
+    GReminderState state;
 } actions[G_REMINDER_ACTION_LAST] = {
-    [G_REMINDER_ACTION_NEW]    = { 0, "new",    "New",    G_CALLBACK (on_new)    },
-    [G_REMINDER_ACTION_DELETE] = { 0, "delete", "Delete", G_CALLBACK (on_delete) },
-    [G_REMINDER_ACTION_EDIT]   = { 0, "edit",   "Edit",   G_CALLBACK (on_edit)   },
-    [G_REMINDER_ACTION_SAVE]   = { 0, "save", "  Save",   G_CALLBACK (on_save)   }
+    [G_REMINDER_ACTION_NEW]    = { 0, "new",    "New",    G_CALLBACK (on_new),    G_REMINDER_STATE_BLANK    },
+    [G_REMINDER_ACTION_DELETE] = { 0, "delete", "Delete", G_CALLBACK (on_delete), G_REMINDER_STATE_BLANK    },
+    [G_REMINDER_ACTION_EDIT]   = { 0, "edit",   "Edit",   G_CALLBACK (on_edit),   G_REMINDER_STATE_EDITABLE },
+    [G_REMINDER_ACTION_SAVE]   = { 0, "save", "  Save",   G_CALLBACK (on_save),   G_REMINDER_STATE_EDITABLE }
 };
 
 ON_BUTTON_PRESSED (NEW,    new)
@@ -131,7 +148,7 @@ g_reminder_actions_init (GReminderActions *self)
         gtk_box_pack_start (box, button, TRUE, TRUE, 0);
     }
 
-    g_reminder_actions_set_editable (self, FALSE);
+    g_reminder_actions_set_state (self, G_REMINDER_STATE_BLANK);
 }
 
 G_REMINDER_VISIBLE GtkWidget *

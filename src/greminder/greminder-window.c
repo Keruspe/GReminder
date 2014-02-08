@@ -61,7 +61,6 @@ ON_ACTION_PROTO (new)
     GReminderWindowPrivate *priv = user_data;
 
     g_clear_object (&priv->item);
-    g_reminder_actions_set_editable (priv->actions, FALSE);
     g_reminder_keywords_widget_reset (priv->keywords);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (priv->text), "", -1);
 }
@@ -79,8 +78,7 @@ ON_ACTION_PROTO (save)
     GReminderWindowPrivate *priv = user_data;
 
     g_reminder_window_private_set_item (priv);
-    if (g_reminder_db_save (priv->db, priv->item))
-        g_reminder_actions_set_editable (priv->actions, TRUE);
+    g_reminder_db_save (priv->db, priv->item);
 }
 
 ON_ACTION_PROTO (edit)
@@ -132,7 +130,7 @@ on_row_activated (GtkListBox    *list_box G_GNUC_UNUSED,
     g_clear_object (&priv->item);
     priv->item = g_object_ref (g_reminder_row_get_item (G_REMINDER_ROW (row)));
 
-    g_reminder_actions_set_editable (priv->actions, TRUE);
+    g_reminder_actions_set_state (priv->actions, G_REMINDER_STATE_EDITABLE);
     g_reminder_keywords_widget_reset_with_data (priv->keywords, g_reminder_item_get_keywords (priv->item));
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (priv->text), g_reminder_item_get_contents (priv->item), -1);
 
