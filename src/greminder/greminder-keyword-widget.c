@@ -25,7 +25,9 @@ struct _GReminderKeywordWidgetPrivate
     GtkButton *button;
 
     gboolean   active;
+    gboolean   valid;
 
+    gulong     changed_id;
     gulong     button_pressed_id;
 };
 
@@ -34,6 +36,7 @@ G_DEFINE_TYPE_WITH_PRIVATE (GReminderKeywordWidget, g_reminder_keyword_widget, G
 enum
 {
     BUTTON_PRESSED,
+    VALID_CHANGED,
 
     LAST_SIGNAL
 };
@@ -71,14 +74,40 @@ g_reminder_keyword_widget_private_toggle_active (GReminderKeywordWidgetPrivate *
 }
 
 static void
+g_reminder_keyword_widget_set_valid (GReminderKeywordWidget *self,
+                                     gboolean                valid)
+{
+    GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private (self);
+
+    if (priv->valid != valid)
+    {
+        priv->valid = valid;
+
+        gtk_widget_set_sensitive (GTK_WIDGET (priv->button), valid);
+
+        g_signal_emit (self,
+                       signals[VALID_CHANGED],
+                       0, /* detail */
+                       valid,
+                       NULL);
+    }
+}
+
+static void
+on_entry_changed (GtkEditable *editable,
+                  gpointer     user_data)
+{
+    GReminderKeywordWidget *self = user_data;
+
+    g_reminder_keyword_widget_set_valid (self, !g_regex_match_simple ("[ \t\r\b]", gtk_entry_get_text (GTK_ENTRY (editable)), G_REGEX_MULTILINE, 0));
+}
+
+static void
 on_button_pressed (GtkButton *button G_GNUC_UNUSED,
                    gpointer   user_data)
 {
     GReminderKeywordWidget *self = user_data;
     GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private (self);
-
-    if (!gtk_entry_get_text_length (priv->entry))
-        return;
 
     g_reminder_keyword_widget_private_toggle_active (priv);
 
@@ -106,6 +135,7 @@ g_reminder_keyword_widget_dispose (GObject *object)
 
     if (priv->button_pressed_id)
     {
+        g_signal_handler_disconnect (priv->entry,  priv->changed_id);
         g_signal_handler_disconnect (priv->button, priv->button_pressed_id);
         priv->button_pressed_id = 0;
     }
@@ -128,6 +158,16 @@ g_reminder_keyword_widget_class_init (GReminderKeywordWidgetClass *klass)
                                             G_TYPE_NONE,
                                             1, /* number of params */
                                             G_TYPE_BOOLEAN);
+    signals[VALID_CHANGED] = g_signal_new ("valid-changed",
+                                           G_REMINDER_TYPE_KEYWORD_WIDGET,
+                                           G_SIGNAL_RUN_LAST,
+                                           0, /* class offset */
+                                           NULL, /* accumulator */
+                                           NULL, /* accumulator data */
+                                           g_cclosure_marshal_VOID__OBJECT,
+                                           G_TYPE_NONE,
+                                           1, /* number of params */
+                                           G_TYPE_BOOLEAN);
 }
 
 static void
@@ -142,9 +182,15 @@ g_reminder_keyword_widget_init (GReminderKeywordWidget *self)
     gtk_widget_override_color (entry, GTK_STATE_FLAG_INSENSITIVE, &grey);
     GtkWidget *button = gtk_button_new_with_label ("+");
     priv->button = GTK_BUTTON (button);
+    gtk_widget_set_sensitive (button, FALSE);
 
     priv->active = TRUE;
+    priv->valid = FALSE;
 
+    priv->changed_id = g_signal_connect (G_OBJECT (entry),
+                                         "changed",
+                                         G_CALLBACK (on_entry_changed),
+                                         self);
     priv->button_pressed_id = g_signal_connect (G_OBJECT (button),
                                                 "pressed",
                                                 G_CALLBACK (on_button_pressed),
