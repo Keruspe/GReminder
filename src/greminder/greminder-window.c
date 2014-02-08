@@ -36,7 +36,11 @@ struct _GReminderWindowPrivate
     GtkWindow               *list;
     GtkListBox              *listbox;
 
-    gulong                   c_signals[G_REMINDER_ACTION_LAST + 2];
+    gboolean                 valid;
+    gboolean                 kvalid;
+    gboolean                 cvalid;
+
+    gulong                   c_signals[G_REMINDER_ACTION_LAST + 3];
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (GReminderWindow, g_reminder_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -114,7 +118,7 @@ g_reminder_window_private_destroy_list (GReminderWindowPrivate *priv)
 {
     if (priv->list)
     {
-        g_signal_handler_disconnect (priv->listbox, priv->c_signals[G_REMINDER_ACTION_LAST + 1]);
+        g_signal_handler_disconnect (priv->listbox, priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
         gtk_window_close (priv->list);
         priv->list = NULL;
     }
@@ -150,7 +154,7 @@ on_search (GtkEntry *entry,
 
     GtkWidget *listbox = gtk_list_box_new ();
     priv->listbox = GTK_LIST_BOX (listbox);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 1] = g_signal_connect (G_OBJECT (listbox),
+    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (listbox),
                                                                     "row-activated",
                                                                     G_CALLBACK (on_row_activated),
                                                                     priv);
@@ -165,6 +169,32 @@ on_search (GtkEntry *entry,
     gtk_widget_show_all (win);
 
     g_slist_free_full (items, g_object_unref);
+}
+
+static void
+g_reminder_window_private_update_actions_state (GReminderWindowPrivate *priv)
+{
+    gboolean valid = priv->kvalid && priv->cvalid;
+
+    if (valid != priv->valid)
+    {
+        priv->valid = valid;
+        g_reminder_actions_set_state (priv->actions, (!valid) ? G_REMINDER_STATE_BLANK : (priv->item) ? G_REMINDER_STATE_EDITABLE : G_REMINDER_STATE_VALID);;
+    }
+}
+
+static void
+on_valid_changed (GReminderKeywordsWidget *keywords G_GNUC_UNUSED,
+                  gboolean                 valid,
+                  gpointer                 user_data)
+{
+    GReminderWindowPrivate *priv = user_data;
+
+    if (priv->kvalid != valid)
+    {
+        priv->kvalid = valid;
+        g_reminder_window_private_update_actions_state (priv);
+    }
 }
 
 static struct
@@ -188,6 +218,7 @@ g_reminder_window_dispose (GObject *object)
         for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
         g_signal_handler_disconnect (priv->search, priv->c_signals[G_REMINDER_ACTION_LAST]);
+        g_signal_handler_disconnect (priv->keywords, priv->c_signals[G_REMINDER_ACTION_LAST + 1]);
     }
 
     g_clear_object (&priv->db);
@@ -211,6 +242,9 @@ g_reminder_window_init (GReminderWindow *self)
 
     priv->item = NULL;
     priv->list = NULL;
+    priv->valid = FALSE;
+    priv->kvalid = FALSE;
+    priv->cvalid = FALSE;
 
     GtkWidget *bar = gtk_header_bar_new ();
     GtkHeaderBar *header_bar = GTK_HEADER_BAR (bar);
@@ -250,6 +284,10 @@ g_reminder_window_init (GReminderWindow *self)
 
     GtkWidget *keywords = g_reminder_keywords_widget_new ();
     priv->keywords = G_REMINDER_KEYWORDS_WIDGET (keywords);
+    priv->c_signals[G_REMINDER_ACTION_LAST + 1] = g_signal_connect (G_OBJECT (keywords),
+                                                                    "valid-changed",
+                                                                    G_CALLBACK (on_valid_changed),
+                                                                    priv);
     gtk_grid_attach_next_to (g, keywords, align, GTK_POS_RIGHT, 2, 1);
 
     align = gtk_alignment_new (0, 0, 0, 0);
