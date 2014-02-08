@@ -28,6 +28,7 @@ struct _GReminderWindowPrivate
     GReminderKeywordsWidget *keywords;
     GtkTextBuffer           *text;
     GtkSearchEntry          *search;
+    GtkEntryCompletion      *completion;
 
     GReminderActions        *actions;
     GReminderDb             *db;
@@ -58,6 +59,14 @@ g_reminder_window_private_set_item (GReminderWindowPrivate *priv)
     priv->item =  g_reminder_item_new (g_reminder_keywords_widget_get_keywords (priv->keywords), text);
 }
 
+static void
+g_reminder_window_private_reset_completion (GReminderWindowPrivate *priv)
+{
+    GtkTreeModel *model = gtk_entry_completion_get_model (priv->completion);
+    g_clear_object (&model);
+    gtk_entry_completion_set_model (priv->completion, GTK_TREE_MODEL (g_reminder_db_get_keywords (priv->db)));
+}
+
 ON_ACTION_PROTO (new)
 {
     GReminderWindowPrivate *priv = user_data;
@@ -73,6 +82,7 @@ ON_ACTION_PROTO (delete)
 
     if (g_reminder_db_delete (priv->db, priv->item))
         on_new (actions, user_data);
+    g_reminder_window_private_reset_completion (priv);
 }
 
 ON_ACTION_PROTO (save)
@@ -81,6 +91,7 @@ ON_ACTION_PROTO (save)
 
     g_reminder_window_private_set_item (priv);
     g_reminder_db_save (priv->db, priv->item);
+    g_reminder_window_private_reset_completion (priv);
 }
 
 ON_ACTION_PROTO (edit)
@@ -88,7 +99,8 @@ ON_ACTION_PROTO (edit)
     GReminderWindowPrivate *priv = user_data;
     
     G_REMINDER_CLEANUP_UNREF GReminderItem *old = g_object_ref (priv->item);
-    on_save (actions, user_data);
+    g_reminder_window_private_set_item (priv);
+    g_reminder_db_save (priv->db, priv->item);
 
     if (g_strcmp0 (g_reminder_item_get_contents (old), g_reminder_item_get_contents (priv->item)))
         g_reminder_db_delete_key (priv->db, g_reminder_item_get_checksum (old));
@@ -109,6 +121,7 @@ ON_ACTION_PROTO (edit)
             g_reminder_db_delete_with_suffix (priv->db, checksum, k->data);
         }
     }
+    g_reminder_window_private_reset_completion (priv);
 }
 
 G_REMINDER_VISIBLE void
@@ -315,11 +328,10 @@ g_reminder_window_new (GtkApplication *app,
 
     priv->db = g_object_ref (db);
 
-    GtkListStore *store = g_reminder_db_get_keywords (db);
-    GtkEntryCompletion *completion = gtk_entry_completion_new ();
-    gtk_entry_completion_set_text_column (completion, 0);
-    gtk_entry_completion_set_model (completion, GTK_TREE_MODEL (store));
-    gtk_entry_set_completion (GTK_ENTRY (priv->search), completion);
+    priv->completion = gtk_entry_completion_new ();
+    gtk_entry_completion_set_text_column (priv->completion, 0);
+    gtk_entry_set_completion (GTK_ENTRY (priv->search), priv->completion);
+    g_reminder_window_private_reset_completion (priv);
 
     return self;
 }
