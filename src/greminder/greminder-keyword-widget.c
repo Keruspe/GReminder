@@ -31,6 +31,8 @@ struct _GReminderKeywordWidgetPrivate
     GtkEntry  *entry;
     GtkButton *button;
 
+    GRegex    *blank_regex;
+
     gboolean   active;
     Tribool   valid;
 
@@ -107,8 +109,9 @@ on_entry_changed (GtkEditable *editable,
                   gpointer     user_data)
 {
     GReminderKeywordWidget *self = user_data;
+    GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private (self);
 
-    g_reminder_keyword_widget_set_valid (self, !g_regex_match_simple ("[ \t\r\b]", gtk_entry_get_text (GTK_ENTRY (editable)), G_REGEX_MULTILINE, 0));
+    g_reminder_keyword_widget_set_valid (self, !g_regex_match (priv->blank_regex, gtk_entry_get_text (GTK_ENTRY (editable)), 0, NULL));
 }
 
 static void
@@ -149,6 +152,12 @@ g_reminder_keyword_widget_dispose (GObject *object)
         priv->button_pressed_id = 0;
     }
 
+    if (priv->blank_regex)
+    {
+        g_regex_unref (priv->blank_regex);
+        priv->blank_regex = NULL;
+    }
+
     G_OBJECT_CLASS (g_reminder_keyword_widget_parent_class)->dispose (object);
 }
 
@@ -185,6 +194,8 @@ g_reminder_keyword_widget_init (GReminderKeywordWidget *self)
     static GdkRGBA grey = { 0.5, 0.5, 0.5, 1 };
 
     GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private ((GReminderKeywordWidget *) self);
+
+    priv->blank_regex = g_regex_new ("[ \t\r\n]", G_REGEX_MULTILINE|G_REGEX_OPTIMIZE, 0, NULL);
 
     GtkWidget *entry = gtk_entry_new ();
     priv->entry = GTK_ENTRY (entry);

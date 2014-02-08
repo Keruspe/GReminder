@@ -35,6 +35,8 @@ struct _GReminderWindowPrivate
 
     GReminderItem           *item;
 
+    GRegex                  *no_blank_regex;
+
     gboolean                 valid;
     gboolean                 kvalid;
     gboolean                 cvalid;
@@ -190,7 +192,7 @@ on_contents_changed (GtkTextBuffer *textbuffer,
     const gchar *text;
     g_object_get (G_OBJECT (textbuffer), "text", &text, NULL);
 
-    gboolean valid = g_regex_match_simple ("[^ \t\r\b]", text, G_REGEX_MULTILINE, 0);
+    gboolean valid = g_regex_match (priv->no_blank_regex, text, 0, NULL);
     if (valid != priv->cvalid)
     {
         priv->cvalid = valid;
@@ -226,6 +228,12 @@ g_reminder_window_dispose (GObject *object)
     g_clear_object (&priv->db);
     g_clear_object (&priv->item);
 
+    if (priv->no_blank_regex)
+    {
+        g_regex_unref (priv->no_blank_regex);
+        priv->no_blank_regex = NULL;
+    }
+
     G_OBJECT_CLASS (g_reminder_window_parent_class)->dispose (object);
 }
 
@@ -244,6 +252,8 @@ g_reminder_window_init (GReminderWindow *self)
     priv->valid = FALSE;
     priv->kvalid = FALSE;
     priv->cvalid = FALSE;
+
+    priv->no_blank_regex = g_regex_new ("[^ \t\r\n]", G_REGEX_MULTILINE|G_REGEX_OPTIMIZE , 0, NULL);
 
     GtkWidget *bar = gtk_header_bar_new ();
     GtkHeaderBar *header_bar = GTK_HEADER_BAR (bar);
