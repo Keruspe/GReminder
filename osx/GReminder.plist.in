@@ -30,5 +30,7 @@
     <true/>
     <key>CFBundlerDisplayName</key>
     <string>GReminder</string>
+    <key>CFBundleSignature</key>
+    <string>org.gnome.GReminder</string>
 </dict>
 </plist>

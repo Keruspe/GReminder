@@ -2,7 +2,7 @@
 <app-bundle>
   <meta>
     <prefix name="default">${env:JHBUILD_PREFIX}</prefix>
-    <destination overwrite="yes">${project}/..</destination>
+    <destination overwrite="yes">${project}</destination>
     <image>
       <!-- Not implemented yet (DMG image). -->
     </image>
@@ -11,7 +11,6 @@
   </meta>
   <plist>${project}/GReminder.plist</plist>
   <main-binary>${prefix}/bin/greminder</main-binary>
-  <launcher-script>${project}/GReminder</launcher-script>
   <binary>
     ${prefix}/lib/${gtkdir}/${pkg:${gtk}:gtk_binary_version}/immodules/*.so
   </binary>
@@ -30,6 +29,12 @@
   <!-- <data dest="${bundle}/Contents/Resources">
     ${project}/GReminder.icns
   </data -->
+  <icon-theme icons="all">
+    Tango
+  </icon-theme>
+  <icon-theme icons="all">
+    hicolor
+  </icon-theme>
   <icon-theme icons="all">
     gnome
   </icon-theme>

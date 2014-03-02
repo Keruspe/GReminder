@@ -15,4 +15,7 @@
 /src/greminder/*.o
 /src/greminder/.deps
 /src/greminder/.dirstamp
+/osx/GReminder.app
+/osx/GReminder-*.dmg
 /osx/GReminder.plist
+.DS_Store
