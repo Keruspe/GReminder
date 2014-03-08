@@ -15,6 +15,7 @@
 /src/greminder/*.o
 /src/greminder/.deps
 /src/greminder/.dirstamp
+/osx/Makefile
 /osx/GReminder.app
 /osx/GReminder-*.dmg
 /osx/GReminder.plist
