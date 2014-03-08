@@ -23,6 +23,14 @@
 #include "greminder-keywords-widget.h"
 #include "greminder-list-window.h"
 
+enum {
+    C_ACTIVATE = G_REMINDER_ACTION_LAST,
+    C_FOCUS,
+    C_VALID_CHANGED,
+    C_CHANGED,
+    C_LAST
+};
+
 struct _GReminderWindowPrivate
 {
     GReminderKeywordsWidget *keywords;
@@ -41,7 +49,7 @@ struct _GReminderWindowPrivate
     gboolean                 kvalid;
     gboolean                 cvalid;
 
-    gulong                   c_signals[G_REMINDER_ACTION_LAST + 4];
+    gulong                   c_signals[C_LAST];
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (GReminderWindow, g_reminder_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -228,10 +236,10 @@ g_reminder_window_dispose (GObject *object)
     {
         for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
-        g_signal_handler_disconnect (priv->search, priv->c_signals[G_REMINDER_ACTION_LAST]);
-        g_signal_handler_disconnect (priv->search, priv->c_signals[G_REMINDER_ACTION_LAST + 1]);
-        g_signal_handler_disconnect (priv->keywords, priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
-        g_signal_handler_disconnect (priv->text, priv->c_signals[G_REMINDER_ACTION_LAST + 3]);
+        g_signal_handler_disconnect (priv->search,   priv->c_signals[C_ACTIVATE]);
+        g_signal_handler_disconnect (priv->search,   priv->c_signals[C_FOCUS]);
+        g_signal_handler_disconnect (priv->keywords, priv->c_signals[C_VALID_CHANGED]);
+        g_signal_handler_disconnect (priv->text,     priv->c_signals[C_CHANGED]);
     }
 
     g_clear_object (&priv->db);
@@ -273,14 +281,14 @@ g_reminder_window_init (GReminderWindow *self)
     GtkWidget *sentry = gtk_search_entry_new ();
     priv->search = GTK_SEARCH_ENTRY (sentry);
     gtk_entry_set_width_chars (GTK_ENTRY (sentry), 40);
-    priv->c_signals[G_REMINDER_ACTION_LAST] = g_signal_connect (G_OBJECT (sentry),
-                                                                "activate",
-                                                                G_CALLBACK (on_search),
-                                                                self);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 1] = g_signal_connect (G_OBJECT (sentry),
-                                                                    "focus-in-event",
-                                                                    G_CALLBACK (on_focus),
-                                                                    NULL);
+    priv->c_signals[C_ACTIVATE] = g_signal_connect (G_OBJECT (sentry),
+                                                    "activate",
+                                                    G_CALLBACK (on_search),
+                                                    self);
+    priv->c_signals[C_FOCUS] = g_signal_connect (G_OBJECT (sentry),
+                                                 "focus-in-event",
+                                                 G_CALLBACK (on_focus),
+                                                 NULL);
     gtk_header_bar_pack_start (header_bar, sentry);
 
     priv->completion = gtk_entry_completion_new ();
@@ -310,10 +318,10 @@ g_reminder_window_init (GReminderWindow *self)
 
     GtkWidget *keywords = g_reminder_keywords_widget_new ();
     priv->keywords = G_REMINDER_KEYWORDS_WIDGET (keywords);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (keywords),
-                                                                    "valid-changed",
-                                                                    G_CALLBACK (on_valid_changed),
-                                                                    priv);
+    priv->c_signals[C_VALID_CHANGED] = g_signal_connect (G_OBJECT (keywords),
+                                                         "valid-changed",
+                                                         G_CALLBACK (on_valid_changed),
+                                                         priv);
     gtk_grid_attach_next_to (g, keywords, align, GTK_POS_RIGHT, 2, 1);
 
     align = gtk_alignment_new (0, 0, 0, 0);
@@ -323,10 +331,10 @@ g_reminder_window_init (GReminderWindow *self)
     GtkWidget *text = gtk_text_view_new ();
     GtkTextView *tv = GTK_TEXT_VIEW (text);
     priv->text = gtk_text_view_get_buffer (tv);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 3] = g_signal_connect (G_OBJECT (priv->text),
-                                                                    "changed",
-                                                                    G_CALLBACK (on_contents_changed),
-                                                                    priv);
+    priv->c_signals[C_CHANGED] = g_signal_connect (G_OBJECT (priv->text),
+                                                   "changed",
+                                                   G_CALLBACK (on_contents_changed),
+                                                   priv);
     gtk_text_view_set_wrap_mode (tv, GTK_WRAP_WORD);
     GtkWidget *scroll = gtk_scrolled_window_new (NULL, NULL);
     GtkScrolledWindow *s = GTK_SCROLLED_WINDOW (scroll);
