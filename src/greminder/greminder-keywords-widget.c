@@ -201,7 +201,7 @@ g_reminder_keywords_widget_reset (GReminderKeywordsWidget *self)
     g_return_if_fail (G_REMINDER_IS_KEYWORDS_WIDGET (self));
 
     g_reminder_keywords_widget_empty_list (self);
-    g_reminder_keywords_widget_add_keyword (self);
+    gtk_widget_grab_focus (GTK_WIDGET (g_reminder_keywords_widget_add_keyword (self)));
 }
 
 G_REMINDER_VISIBLE void

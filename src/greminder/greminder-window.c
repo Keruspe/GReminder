@@ -26,7 +26,7 @@
 #include <string.h>
 
 enum {
-    C_ACTIVATE = G_REMINDER_ACTION_LAST,
+    C_ACTIVATE = _G_REMINDER_ACTION_LAST,
     C_FOCUS,
     C_PRESS,
     C_MATCH,
@@ -38,6 +38,7 @@ enum {
 struct _GReminderWindowPrivate
 {
     GReminderKeywordsWidget *keywords;
+    GtkWidget               *textview;
     GtkTextBuffer           *text;
     GtkSearchEntry          *search;
     GtkEntryCompletion      *completion;
@@ -106,6 +107,8 @@ ON_ACTION_PROTO (save)
     g_reminder_window_private_set_item (priv);
     g_reminder_db_save (priv->db, priv->item);
     g_reminder_window_private_reset_completion (priv);
+
+    gtk_widget_grab_focus (GTK_WIDGET (priv->textview));
 }
 
 ON_ACTION_PROTO (edit)
@@ -136,6 +139,15 @@ ON_ACTION_PROTO (edit)
         }
     }
     g_reminder_window_private_reset_completion (priv);
+
+    gtk_widget_grab_focus (GTK_WIDGET (priv->textview));
+}
+
+ON_ACTION_PROTO (cancel)
+{
+    GReminderWindowPrivate *priv = user_data;
+
+    gtk_widget_grab_focus (GTK_WIDGET (priv->textview));
 }
 
 G_REMINDER_VISIBLE void
@@ -150,6 +162,8 @@ g_reminder_window_edit (GReminderWindow *self,
     g_reminder_actions_set_state (priv->actions, G_REMINDER_STATE_EDITABLE);
     g_reminder_keywords_widget_reset_with_data (priv->keywords, g_reminder_item_get_keywords (item));
     gtk_text_buffer_set_text (priv->text, g_reminder_item_get_contents (item), -1);
+
+    gtk_widget_grab_focus (GTK_WIDGET (priv->textview));
 }
 
 static void
@@ -244,11 +258,12 @@ static struct
 {
     const gchar *name;
     GCallback    callback;
-} actions[G_REMINDER_ACTION_LAST] = {
+} actions[_G_REMINDER_ACTION_LAST] = {
     [G_REMINDER_ACTION_NEW]    = { "new",    G_CALLBACK (on_new)    },
     [G_REMINDER_ACTION_DELETE] = { "delete", G_CALLBACK (on_delete) },
     [G_REMINDER_ACTION_EDIT]   = { "edit",   G_CALLBACK (on_edit)   },
-    [G_REMINDER_ACTION_SAVE]   = { "save",   G_CALLBACK (on_save)   }
+    [G_REMINDER_ACTION_SAVE]   = { "save",   G_CALLBACK (on_save)   },
+    [G_REMINDER_ACTION_CANCEL] = { "cancel", G_CALLBACK (on_cancel) }
 };
 
 static void
@@ -258,7 +273,7 @@ g_reminder_window_dispose (GObject *object)
 
     if (priv->db)
     {
-        for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
+        for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != _G_REMINDER_ACTION_LAST; ++a)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
         g_signal_handler_disconnect (priv->search,     priv->c_signals[C_ACTIVATE]);
         g_signal_handler_disconnect (priv->search,     priv->c_signals[C_FOCUS]);
@@ -332,7 +347,7 @@ g_reminder_window_init (GReminderWindow *self)
 
     GtkWidget *as = g_reminder_actions_new ();
     priv->actions = G_REMINDER_ACTIONS (as);
-    for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
+    for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != _G_REMINDER_ACTION_LAST; ++a)
     {
         priv->c_signals[a] = g_signal_connect (G_OBJECT (as),
                                                actions[a].name,
@@ -363,6 +378,7 @@ g_reminder_window_init (GReminderWindow *self)
     gtk_grid_attach (g, align, 0, 1, 1, 1);
 
     GtkWidget *text = gtk_text_view_new ();
+    priv->textview = text;
     GtkTextView *tv = GTK_TEXT_VIEW (text);
     priv->text = gtk_text_view_get_buffer (tv);
     priv->c_signals[C_CHANGED] = g_signal_connect (G_OBJECT (priv->text),

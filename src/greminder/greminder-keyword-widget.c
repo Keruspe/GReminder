@@ -162,9 +162,18 @@ g_reminder_keyword_widget_dispose (GObject *object)
 }
 
 static void
+g_reminder_keyword_widget_grab_focus (GtkWidget *widget)
+{
+    GReminderKeywordWidgetPrivate *priv = g_reminder_keyword_widget_get_instance_private ((GReminderKeywordWidget *) widget);
+    g_print ("focus\n");
+    gtk_widget_grab_focus (GTK_WIDGET (priv->entry));
+}
+
+static void
 g_reminder_keyword_widget_class_init (GReminderKeywordWidgetClass *klass)
 {
     G_OBJECT_CLASS (klass)->dispose = g_reminder_keyword_widget_dispose;
+    GTK_WIDGET_CLASS (klass)->grab_focus = g_reminder_keyword_widget_grab_focus;
 
     signals[BUTTON_PRESSED] = g_signal_new ("button-pressed",
                                             G_REMINDER_TYPE_KEYWORD_WIDGET,

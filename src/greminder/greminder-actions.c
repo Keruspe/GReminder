@@ -75,6 +75,7 @@ ON_BUTTON_PRESSED_PROTO (new);
 ON_BUTTON_PRESSED_PROTO (delete);
 ON_BUTTON_PRESSED_PROTO (edit);
 ON_BUTTON_PRESSED_PROTO (save);
+ON_BUTTON_PRESSED_PROTO (cancel);
 
 static struct {
     guint          signal;
@@ -82,17 +83,19 @@ static struct {
     const gchar   *label;
     GCallback      callback;
     GReminderState state;
-} actions[G_REMINDER_ACTION_LAST] = {
+} actions[_G_REMINDER_ACTION_LAST] = {
     [G_REMINDER_ACTION_NEW]    = { 0, "new",    "New",    G_CALLBACK (on_new),    G_REMINDER_STATE_BLANK    },
     [G_REMINDER_ACTION_DELETE] = { 0, "delete", "Delete", G_CALLBACK (on_delete), G_REMINDER_STATE_BLANK    },
     [G_REMINDER_ACTION_EDIT]   = { 0, "edit",   "Edit",   G_CALLBACK (on_edit),   G_REMINDER_STATE_EDITABLE },
-    [G_REMINDER_ACTION_SAVE]   = { 0, "save", "  Save",   G_CALLBACK (on_save),   G_REMINDER_STATE_EDITABLE }
+    [G_REMINDER_ACTION_SAVE]   = { 0, "save",   "Save",   G_CALLBACK (on_save),   G_REMINDER_STATE_EDITABLE },
+    [G_REMINDER_ACTION_CANCEL] = { 0, "cancel", "Cancel", G_CALLBACK (on_cancel), G_REMINDER_STATE_EDITABLE }
 };
 
 ON_BUTTON_PRESSED (NEW,    new)
 ON_BUTTON_PRESSED (DELETE, real_delete)
 ON_BUTTON_PRESSED (EDIT,   edit)
 ON_BUTTON_PRESSED (SAVE,   save)
+ON_BUTTON_PRESSED (CANCEL, cancel)
 
 ON_BUTTON_PRESSED_PROTO (delete)
 {
@@ -108,7 +111,7 @@ ON_BUTTON_PRESSED_PROTO (delete)
         break;
     case GTK_RESPONSE_CANCEL:
     case GTK_RESPONSE_NONE:
-        /* Nothing to do */
+        on_cancel (NULL, user_data);
         break;
     default:
         g_assert_not_reached ();
@@ -138,7 +141,7 @@ g_reminder_actions_class_init (GReminderActionsClass *klass)
 {
     G_OBJECT_CLASS (klass)->dispose = g_reminder_actions_dispose;
 
-    for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
+    for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != _G_REMINDER_ACTION_LAST; ++a)
     {
         actions[a].signal = g_signal_new (actions[a].name,
                                           G_REMINDER_TYPE_ACTIONS,
