@@ -41,7 +41,7 @@ struct _GReminderWindowPrivate
     gboolean                 kvalid;
     gboolean                 cvalid;
 
-    gulong                   c_signals[G_REMINDER_ACTION_LAST + 3];
+    gulong                   c_signals[G_REMINDER_ACTION_LAST + 4];
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE (GReminderWindow, g_reminder_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -158,6 +158,14 @@ on_search (GtkEntry *entry,
 }
 
 static void
+on_focus (GtkWidget *widget,
+          GdkEvent  *event    G_GNUC_UNUSED,
+          gpointer  user_data G_GNUC_UNUSED)
+{
+    gtk_entry_buffer_set_text (gtk_entry_get_buffer (GTK_ENTRY (widget)), "", 0);
+}
+
+static void
 g_reminder_window_private_update_actions_state (GReminderWindowPrivate *priv)
 {
     gboolean valid = priv->kvalid && priv->cvalid;
@@ -221,8 +229,9 @@ g_reminder_window_dispose (GObject *object)
         for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
         g_signal_handler_disconnect (priv->search, priv->c_signals[G_REMINDER_ACTION_LAST]);
-        g_signal_handler_disconnect (priv->keywords, priv->c_signals[G_REMINDER_ACTION_LAST + 1]);
-        g_signal_handler_disconnect (priv->text, priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
+        g_signal_handler_disconnect (priv->search, priv->c_signals[G_REMINDER_ACTION_LAST + 1]);
+        g_signal_handler_disconnect (priv->keywords, priv->c_signals[G_REMINDER_ACTION_LAST + 2]);
+        g_signal_handler_disconnect (priv->text, priv->c_signals[G_REMINDER_ACTION_LAST + 3]);
     }
 
     g_clear_object (&priv->db);
@@ -268,7 +277,16 @@ g_reminder_window_init (GReminderWindow *self)
                                                                 "activate",
                                                                 G_CALLBACK (on_search),
                                                                 self);
+    priv->c_signals[G_REMINDER_ACTION_LAST + 1] = g_signal_connect (G_OBJECT (sentry),
+                                                                    "focus-in-event",
+                                                                    G_CALLBACK (on_focus),
+                                                                    NULL);
     gtk_header_bar_pack_start (header_bar, sentry);
+
+    priv->completion = gtk_entry_completion_new ();
+    gtk_entry_completion_set_text_column (priv->completion, 0);
+    gtk_entry_completion_set_minimum_key_length (priv->completion, 0);
+    gtk_entry_set_completion (GTK_ENTRY (priv->search), priv->completion);
 
     GtkWidget *as = g_reminder_actions_new ();
     priv->actions = G_REMINDER_ACTIONS (as);
@@ -292,7 +310,7 @@ g_reminder_window_init (GReminderWindow *self)
 
     GtkWidget *keywords = g_reminder_keywords_widget_new ();
     priv->keywords = G_REMINDER_KEYWORDS_WIDGET (keywords);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 1] = g_signal_connect (G_OBJECT (keywords),
+    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (keywords),
                                                                     "valid-changed",
                                                                     G_CALLBACK (on_valid_changed),
                                                                     priv);
@@ -305,7 +323,7 @@ g_reminder_window_init (GReminderWindow *self)
     GtkWidget *text = gtk_text_view_new ();
     GtkTextView *tv = GTK_TEXT_VIEW (text);
     priv->text = gtk_text_view_get_buffer (tv);
-    priv->c_signals[G_REMINDER_ACTION_LAST + 2] = g_signal_connect (G_OBJECT (priv->text),
+    priv->c_signals[G_REMINDER_ACTION_LAST + 3] = g_signal_connect (G_OBJECT (priv->text),
                                                                     "changed",
                                                                     G_CALLBACK (on_contents_changed),
                                                                     priv);
@@ -338,9 +356,6 @@ g_reminder_window_new (GtkApplication *app,
 
     priv->db = g_object_ref (db);
 
-    priv->completion = gtk_entry_completion_new ();
-    gtk_entry_completion_set_text_column (priv->completion, 0);
-    gtk_entry_set_completion (GTK_ENTRY (priv->search), priv->completion);
     g_reminder_window_private_reset_completion (priv);
 
     return self;
