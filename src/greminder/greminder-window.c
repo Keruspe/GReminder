@@ -23,9 +23,12 @@
 #include "greminder-keywords-widget.h"
 #include "greminder-list-window.h"
 
+#include <string.h>
+
 enum {
     C_ACTIVATE = G_REMINDER_ACTION_LAST,
     C_FOCUS,
+    C_PRESS,
     C_VALID_CHANGED,
     C_CHANGED,
     C_LAST
@@ -165,12 +168,13 @@ on_search (GtkEntry *entry,
     g_slist_free_full (items, g_object_unref);
 }
 
-static void
-on_focus (GtkWidget *widget,
-          GdkEvent  *event    G_GNUC_UNUSED,
-          gpointer  user_data G_GNUC_UNUSED)
+static gboolean
+reset_search (GtkWidget *widget,
+              GdkEvent  *event    G_GNUC_UNUSED,
+              gpointer  user_data G_GNUC_UNUSED)
 {
     gtk_entry_buffer_set_text (gtk_entry_get_buffer (GTK_ENTRY (widget)), "", 0);
+    return FALSE;
 }
 
 static void
@@ -238,6 +242,7 @@ g_reminder_window_dispose (GObject *object)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
         g_signal_handler_disconnect (priv->search,   priv->c_signals[C_ACTIVATE]);
         g_signal_handler_disconnect (priv->search,   priv->c_signals[C_FOCUS]);
+        g_signal_handler_disconnect (priv->search,   priv->c_signals[C_PRESS]);
         g_signal_handler_disconnect (priv->keywords, priv->c_signals[C_VALID_CHANGED]);
         g_signal_handler_disconnect (priv->text,     priv->c_signals[C_CHANGED]);
     }
@@ -287,7 +292,11 @@ g_reminder_window_init (GReminderWindow *self)
                                                     self);
     priv->c_signals[C_FOCUS] = g_signal_connect (G_OBJECT (sentry),
                                                  "focus-in-event",
-                                                 G_CALLBACK (on_focus),
+                                                 G_CALLBACK (reset_search),
+                                                 NULL);
+    priv->c_signals[C_PRESS] = g_signal_connect (G_OBJECT (sentry),
+                                                 "button-release-event",
+                                                 G_CALLBACK (reset_search),
                                                  NULL);
     gtk_header_bar_pack_start (header_bar, sentry);
 
