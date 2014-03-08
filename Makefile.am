@@ -66,6 +66,9 @@ include src/greminder.mk
 update-po:
 	$(MAKE) -C po $@
 
+dmg:
+	$(MAKE) -C osx all
+
 release:
 	$(MAKE) distcheck &&                                            \
 	git commit -asm "Release $(PACKAGE_NAME) $(PACKAGE_VERSION)" && \

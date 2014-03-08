@@ -132,6 +132,7 @@ AC_CHECK_LIB([leveldb], [leveldb_open], [], [AC_MSG_FAILURE([libleveldb not foun
 AC_CONFIG_FILES([
     Makefile
     po/Makefile.in
+    osx/Makefile
     osx/GReminder.plist
 ])
 AC_OUTPUT
