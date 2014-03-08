@@ -16,7 +16,7 @@
 # along with GReminder.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_PREREQ([2.69])
-AC_INIT([GReminder], [3], [Marc-Antoine@Perennou.com], [greminder])
+AC_INIT([GReminder], [4], [Marc-Antoine@Perennou.com], [greminder])
 
 INTLTOOL_REQUIRED="0.50.0"
 PKGCONFIG_REQUIRED="0.22"

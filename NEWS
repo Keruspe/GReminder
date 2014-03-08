@@ -1,4 +1,11 @@
-NEW in 3 (02/03/2014)
+NEW in 4 (08/03/2014)
+=============
+
+- Better autocompletion handling in search entry
+- Confirmation dialog on delete
+- Better focus management
+
+NEW in 3 (08/03/2014)
 =============
 
 - Better autocompletion in search entry
