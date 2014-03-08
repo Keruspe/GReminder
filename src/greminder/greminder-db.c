@@ -304,7 +304,7 @@ g_reminder_db_private_get_keywords (GReminderDbPrivate *priv)
                 }
             }
             if (!found)
-                keywords = g_slist_prepend (keywords, sdup (key, &len));
+                keywords = g_slist_insert_sorted (keywords, sdup (key, &len), (GCompareFunc) g_strcmp0);
         }
         else
         {
