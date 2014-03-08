@@ -90,9 +90,31 @@ static struct {
 };
 
 ON_BUTTON_PRESSED (NEW,    new)
-ON_BUTTON_PRESSED (DELETE, delete)
+ON_BUTTON_PRESSED (DELETE, real_delete)
 ON_BUTTON_PRESSED (EDIT,   edit)
 ON_BUTTON_PRESSED (SAVE,   save)
+
+ON_BUTTON_PRESSED_PROTO (delete)
+{
+    GtkWidget *dialog = gtk_message_dialog_new (NULL,
+                                                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
+                                                GTK_MESSAGE_WARNING,
+                                                GTK_BUTTONS_OK_CANCEL,
+                                                "Are you sure you want to delete this entry?");
+    switch (gtk_dialog_run (GTK_DIALOG (dialog)))
+    {
+    case GTK_RESPONSE_OK:
+        on_real_delete (NULL, user_data);
+        break;
+    case GTK_RESPONSE_CANCEL:
+    case GTK_RESPONSE_NONE:
+        /* Nothing to do */
+        break;
+    default:
+        g_assert_not_reached ();
+    }
+    gtk_widget_destroy (dialog);
+}
 
 static void
 g_reminder_actions_dispose (GObject *object)
