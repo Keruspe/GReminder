@@ -29,6 +29,7 @@ enum {
     C_ACTIVATE = G_REMINDER_ACTION_LAST,
     C_FOCUS,
     C_PRESS,
+    C_MATCH,
     C_VALID_CHANGED,
     C_CHANGED,
     C_LAST
@@ -152,13 +153,10 @@ g_reminder_window_edit (GReminderWindow *self,
 }
 
 static void
-on_search (GtkEntry *entry,
-           gpointer  user_data)
+g_reminder_window_search (GReminderWindow *self,
+                          const gchar     *text)
 {
-    GReminderWindow *self = user_data;
     GReminderWindowPrivate *priv = g_reminder_window_get_instance_private (self);
-
-    const gchar *text = gtk_entry_get_text (entry);
     GSList *items = g_reminder_db_find (priv->db, text);
 
     if (!items)
@@ -168,6 +166,14 @@ on_search (GtkEntry *entry,
     g_slist_free_full (items, g_object_unref);
 }
 
+static void
+on_search (GtkEntry *entry,
+           gpointer  user_data)
+{
+    GReminderWindow *self = user_data;
+    g_reminder_window_search (self, gtk_entry_get_text (entry));
+}
+
 static gboolean
 reset_search (GtkWidget *widget,
               GdkEvent  *event    G_GNUC_UNUSED,
@@ -175,6 +181,20 @@ reset_search (GtkWidget *widget,
 {
     gtk_entry_buffer_set_text (gtk_entry_get_buffer (GTK_ENTRY (widget)), "", 0);
     return FALSE;
+}
+
+static gboolean
+on_match_selected (GtkEntryCompletion *completion G_GNUC_UNUSED,
+                   GtkTreeModel       *model,
+                   GtkTreeIter        *iter,
+                   gpointer            user_data)
+{
+    GReminderWindow *self = user_data;
+    gchar *text = NULL;
+    gtk_tree_model_get (model, iter, 0, &text, -1);
+    g_reminder_window_search (self, text);
+    g_free (text);
+    return TRUE;
 }
 
 static void
@@ -240,11 +260,12 @@ g_reminder_window_dispose (GObject *object)
     {
         for (GReminderAction a = G_REMINDER_ACTION_FIRST; a != G_REMINDER_ACTION_LAST; ++a)
             g_signal_handler_disconnect (priv->actions, priv->c_signals[a]);
-        g_signal_handler_disconnect (priv->search,   priv->c_signals[C_ACTIVATE]);
-        g_signal_handler_disconnect (priv->search,   priv->c_signals[C_FOCUS]);
-        g_signal_handler_disconnect (priv->search,   priv->c_signals[C_PRESS]);
-        g_signal_handler_disconnect (priv->keywords, priv->c_signals[C_VALID_CHANGED]);
-        g_signal_handler_disconnect (priv->text,     priv->c_signals[C_CHANGED]);
+        g_signal_handler_disconnect (priv->search,     priv->c_signals[C_ACTIVATE]);
+        g_signal_handler_disconnect (priv->search,     priv->c_signals[C_FOCUS]);
+        g_signal_handler_disconnect (priv->search,     priv->c_signals[C_PRESS]);
+        g_signal_handler_disconnect (priv->completion, priv->c_signals[C_MATCH]);
+        g_signal_handler_disconnect (priv->keywords,   priv->c_signals[C_VALID_CHANGED]);
+        g_signal_handler_disconnect (priv->text,       priv->c_signals[C_CHANGED]);
     }
 
     g_clear_object (&priv->db);
@@ -304,6 +325,10 @@ g_reminder_window_init (GReminderWindow *self)
     gtk_entry_completion_set_text_column (priv->completion, 0);
     gtk_entry_completion_set_minimum_key_length (priv->completion, 0);
     gtk_entry_set_completion (GTK_ENTRY (priv->search), priv->completion);
+    priv->c_signals[C_MATCH] = g_signal_connect (G_OBJECT (priv->completion),
+                                                 "match-selected",
+                                                 G_CALLBACK (on_match_selected),
+                                                 self);
 
     GtkWidget *as = g_reminder_actions_new ();
     priv->actions = G_REMINDER_ACTIONS (as);
